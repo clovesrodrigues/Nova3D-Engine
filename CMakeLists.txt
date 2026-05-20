@@ -27,6 +27,10 @@ add_library(nova3d
     src/Graphics/MaterialInstance.cpp
     src/Scene/Scene.cpp
     src/Graphics/RenderPipeline/ForwardRenderer.cpp
+    src/Animation/Skeleton.cpp
+    src/Animation/Animation.cpp
+    src/Terrain/Terrain.cpp
+    src/Spatial/SpatialPartition.cpp
 )
 
 target_include_directories(nova3d PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
