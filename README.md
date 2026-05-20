@@ -1,6 +1,6 @@
 # Nova3D Engine
 
-Nova3D é uma engine 3D multiplataforma inspirada na filosofia da Irrlicht Engine, construída com C++ moderno e arquitetura modular/desacoplada.
+Nova3D é uma engine 3D multiplataforma inspirada na filosofia das melhores Engines, construída com C++ moderno e arquitetura modular/desacoplada.
 
 ## Objetivos
 
