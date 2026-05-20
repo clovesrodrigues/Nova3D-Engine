@@ -14,21 +14,21 @@ add_library(nova3d
     src/Core/Engine.cpp
     src/Platform/PlatformFactory.cpp
     src/Platform/SDL/SDLPlatformServices.cpp
-    src/Graphics/RenderBackendFactory.cpp
     src/Graphics/OpenGL/OpenGLRenderBackend.cpp
     src/Assets/AssetRegistry.cpp
 )
 
-target_include_directories(nova3d
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+target_include_directories(nova3d PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_link_libraries(nova3d PUBLIC SDL2::SDL2)
 
 if(ANDROID)
+    find_library(log-lib log)
+    target_link_libraries(nova3d PUBLIC GLESv3 EGL ${log-lib})
     target_compile_definitions(nova3d PUBLIC NOVA3D_PLATFORM_ANDROID=1)
 else()
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(nova3d PUBLIC OpenGL::GL)
     target_compile_definitions(nova3d PUBLIC NOVA3D_PLATFORM_DESKTOP=1)
 endif()
 
