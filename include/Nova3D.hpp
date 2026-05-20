@@ -21,3 +21,14 @@
 #include <Nova3D/IO/Archives.hpp>
 #include <Nova3D/Assets/AssetTypes.hpp>
 #include <Nova3D/Assets/ImporterRegistry.hpp>
+
+#include <Nova3D/Serialization/Serialization.hpp>
+#include <Nova3D/Serialization/JsonSerialization.hpp>
+#include <Nova3D/Reflection/Reflection.hpp>
+#include <Nova3D/Core/ObjectRegistry.hpp>
+#include <Nova3D/Scene/SceneSerialization.hpp>
+#include <Nova3D/Scene/Prefab.hpp>
+#include <Nova3D/Debug/DebugRenderer.hpp>
+#include <Nova3D/Editor/RuntimeIntrospection.hpp>
+#include <Nova3D/Resources/DependencyGraph.hpp>
+#include <Nova3D/Resources/HotReloadHooks.hpp>
