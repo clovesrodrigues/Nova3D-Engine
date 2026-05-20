@@ -1,50 +1,37 @@
 #include <Nova3D.hpp>
-#include <array>
 
 class SandboxApp final : public nova3d::core::IApplication {
 public:
     bool onInitialize(nova3d::core::NovaDevice& device) override {
         auto& driver = device.videoDriver();
-        m_shader = driver.createShader();
-#if defined(__ANDROID__)
-        const char* vs = "#version 300 es\nlayout(location=0) in vec3 aPos;layout(location=1) in vec3 aColor;out vec3 vColor;void main(){vColor=aColor;gl_Position=vec4(aPos,1.0);}";
-        const char* fs = "#version 300 es\nprecision mediump float;in vec3 vColor;out vec4 FragColor;void main(){FragColor=vec4(vColor,1.0);}";
-#else
-        const char* vs = "#version 330 core\nlayout(location=0) in vec3 aPos;layout(location=1) in vec3 aColor;out vec3 vColor;void main(){vColor=aColor;gl_Position=vec4(aPos,1.0);}";
-        const char* fs = "#version 330 core\nin vec3 vColor;out vec4 FragColor;void main(){FragColor=vec4(vColor,1.0);}";
-#endif
-        if (!m_shader->compile(vs, fs)) return false;
-        m_vb = driver.createVertexBuffer();
-        m_ib = driver.createIndexBuffer();
-        const std::array<float, 18> vertices{0.0f,0.5f,0.0f,1,0,0, -0.5f,-0.5f,0.0f,0,1,0, 0.5f,-0.5f,0.0f,0,0,1};
-        const std::array<std::uint32_t, 3> indices{0,1,2};
-        m_vb->upload(vertices.data(), sizeof(vertices));
-        m_ib->upload(indices.data(), indices.size());
+        m_scene = std::make_unique<nova3d::scene::SceneManager>(driver);
+        m_camera = m_scene->createCamera();
+        m_camera->transform().position = {0,0,2};
+        m_camera->setPerspective(60.0F, 1.6F, 0.1F, 100.0F);
+        m_camera->lookAt({0,0,0});
+        m_scene->setActiveCamera(m_camera);
+        m_meshNode = m_scene->createMeshNode(nova3d::scene::createSimpleTriangleMesh());
         return true;
     }
-    void onUpdate(float) override {
-        m_shader->bind();
-        m_vb->bind();
-        m_ib->bind();
-        // Render commands are backend-agnostic at API boundary.
-        m_driver->drawIndexed(nova3d::graphics::PrimitiveType::Triangles, m_ib->indexCount());
+    void onUpdate(float dt) override {
+        m_angle += dt;
+        m_meshNode->transform().rotation = nova3d::math::Quaternion::fromAxisAngle({0,0,1}, m_angle);
+        m_meshNode->transform().markDirty();
+        m_scene->update(dt);
+        m_scene->render();
     }
     void onShutdown() override {}
-    void setDriver(nova3d::graphics::IVideoDriver& driver) { m_driver = &driver; }
 private:
-    nova3d::graphics::IVideoDriver* m_driver = nullptr;
-    std::shared_ptr<nova3d::graphics::IShader> m_shader;
-    std::shared_ptr<nova3d::graphics::IVertexBuffer> m_vb;
-    std::shared_ptr<nova3d::graphics::IIndexBuffer> m_ib;
+    float m_angle = 0.0F;
+    std::unique_ptr<nova3d::scene::SceneManager> m_scene;
+    std::shared_ptr<nova3d::scene::CameraSceneNode> m_camera;
+    std::shared_ptr<nova3d::scene::MeshSceneNode> m_meshNode;
 };
 
 int main() {
     SandboxApp app;
     nova3d::core::NovaDevice engine;
-    if (!engine.initialize(app)) {
-        return 1;
-    }
-    app.setDriver(engine.videoDriver());
+    if (!engine.initialize(app)) return 1;
     engine.run();
     return 0;
 }
