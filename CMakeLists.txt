@@ -16,6 +16,7 @@ add_library(nova3d
     src/Platform/SDL/SDLPlatformServices.cpp
     src/Graphics/OpenGL/OpenGLRenderBackend.cpp
     src/Assets/AssetRegistry.cpp
+    src/Scene/Scene.cpp
 )
 
 target_include_directories(nova3d PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

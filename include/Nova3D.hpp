@@ -10,3 +10,7 @@
 #include <Nova3D/Graphics/IRenderer.hpp>
 #include <Nova3D/Graphics/RendererTypes.hpp>
 #include <Nova3D/Assets/AssetRegistry.hpp>
+
+#include <Nova3D/Core/Math/Math.hpp>
+#include <Nova3D/Scene/IMesh.hpp>
+#include <Nova3D/Scene/Scene.hpp>
