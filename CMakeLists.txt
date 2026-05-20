@@ -31,6 +31,16 @@ add_library(nova3d
     src/Animation/Animation.cpp
     src/Terrain/Terrain.cpp
     src/Spatial/SpatialPartition.cpp
+    src/Serialization/Serialization.cpp
+    src/Serialization/JsonSerialization.cpp
+    src/Scene/SceneSerialization.cpp
+    src/Scene/Prefab.cpp
+    src/Reflection/Reflection.cpp
+    src/Core/ObjectRegistry.cpp
+    src/Debug/DebugRenderer.cpp
+    src/Editor/RuntimeIntrospection.cpp
+    src/Resources/DependencyGraph.cpp
+    src/Resources/HotReloadHooks.cpp
 )
 
 target_include_directories(nova3d PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
