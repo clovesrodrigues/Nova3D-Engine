@@ -3,6 +3,9 @@
 #include <Nova3D/Graphics/RenderPipeline/ForwardRenderer.hpp>
 #include <Nova3D/Assets/Importers/OBJImporter.hpp>
 #include <Nova3D/Animation/AnimationState.hpp>
+#include <Nova3D/Assets/Importers/FBXImporter.hpp>
+#include <Nova3D/GUI/GUI.hpp>
+#include <Nova3D/Editor/RuntimeUIFoundation.hpp>
 
 class SandboxApp final : public nova3d::core::IApplication {
 public:
@@ -30,13 +33,18 @@ public:
         const auto prefabJson=nova3d::scene::PrefabSerializer::toJson(m_prefabInstance);
         nova3d::core::Logger::info("Scene JSON bytes: "+std::to_string(m_savedSceneJson.size())+", Prefab JSON bytes: "+std::to_string(prefabJson.size()));
 
-        auto skeleton=std::make_shared<nova3d::animation::Skeleton>(); nova3d::animation::BoneHierarchy h; h.addBone({"root",-1,{},{}}); skeleton->setHierarchy(h);
-        auto clip=std::make_shared<nova3d::animation::AnimationClip>("spin"); clip->setDuration(2.0F); nova3d::animation::AnimationTrack t; nova3d::animation::AnimationChannel ch; ch.boneIndex=0; ch.keyframes.push_back({0.0F,{{0,0,0},nova3d::math::Quaternion::fromAxisAngle({0,1,0},0),{1,1,1}}}); ch.keyframes.push_back({2.0F,{{0,0,0},nova3d::math::Quaternion::fromAxisAngle({0,1,0},nova3d::math::kPi*2.0F),{1,1,1}}}); t.channels.push_back(ch); clip->tracks().push_back(t);
-        m_animController.setSkeleton(skeleton); nova3d::animation::AnimationPlayer p; p.setClip(clip); p.state().play(); m_animController.addPlayer(std::move(p));
+        nova3d::assets::FBXImporter fbx; fbx.setBackend(std::make_shared<nova3d::assets::StubFBXImporterBackend>()); auto imported = fbx.importFromFile("assets/models/character.fbx");
+        if (imported && !imported->skeletons.empty() && !imported->animations.empty() && !imported->animations.front().clips.empty()) {
+            m_animController.setSkeleton(imported->skeletons.front().skeleton);
+            nova3d::animation::AnimationPlayer p; p.setClip(imported->animations.front().clips.front()); p.state().play(); m_animController.addPlayer(std::move(p));
+        }
+        m_guiManager = std::make_unique<nova3d::gui::GUIManager>(std::make_shared<NullGUIRenderer>());
+        m_runtimeUi = nova3d::editor::RuntimeUIFoundation::build(m_guiManager->context());
+        auto btn = std::make_shared<nova3d::gui::Button>(); btn->text = "Play/Pause"; btn->rect={30,330,140,30}; btn->onClick=[this](){m_playback=!m_playback;}; m_runtimeUi.assetBrowser->addChild(btn);
         return true;
     }
     void onUpdate(float dt) override {
-        m_animController.update(dt); m_debug.newFrame(dt);
+        if (m_playback) m_animController.update(dt); m_debug.newFrame(dt); m_guiManager->tick();
         m_angle += dt;
         m_meshNode->transform().rotation = nova3d::math::Quaternion::fromAxisAngle({0,1,0}, m_angle);
         m_meshNode->transform().markDirty();
@@ -47,6 +55,7 @@ public:
         m_renderer->render(*m_scene);
     }
 private:
+    class NullGUIRenderer final : public nova3d::gui::GUIRenderer { public: void beginFrame() override {} void drawQuad(const nova3d::gui::Rect&, const nova3d::math::Vector4&, int) override {} void drawText(const nova3d::gui::Rect&, const std::string&, const nova3d::math::Vector4&, int) override {} void endFrame() override {} };
     float m_angle = 0.0F;
     std::string m_savedSceneJson;
     nova3d::scene::PrefabInstance m_prefabInstance;
@@ -58,5 +67,8 @@ private:
     std::shared_ptr<nova3d::scene::CameraSceneNode> m_camera;
     std::shared_ptr<nova3d::scene::MeshSceneNode> m_meshNode;
     nova3d::animation::AnimationController m_animController;
+    bool m_playback = true;
+    std::unique_ptr<nova3d::gui::GUIManager> m_guiManager;
+    nova3d::editor::RuntimeUIFoundation m_runtimeUi;
 };
 int main(){ SandboxApp app; nova3d::core::NovaDevice engine; if(!engine.initialize(app)) return 1; engine.run(); return 0; }
