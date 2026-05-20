@@ -1,6 +1,7 @@
 #pragma once
 
 namespace nova3d::platform { class IWindow; }
+namespace nova3d::graphics { class IVideoDriver; }
 
 namespace nova3d::graphics {
 
@@ -12,7 +13,7 @@ public:
     virtual void beginFrame() = 0;
     virtual void endFrame() = 0;
     virtual void resize(int width, int height) = 0;
-    virtual void setClearColor(float r, float g, float b, float a) = 0;
+    virtual IVideoDriver& videoDriver() = 0;
 };
 
 } // namespace nova3d::graphics
