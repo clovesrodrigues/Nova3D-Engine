@@ -46,6 +46,10 @@ add_library(nova3d
     src/Editor/RuntimeIntrospection.cpp
     src/Resources/DependencyGraph.cpp
     src/Resources/HotReloadHooks.cpp
+    src/Runtime/TaskSystem.cpp
+    src/Runtime/RuntimeFoundation.cpp
+    src/Runtime/EngineInfrastructure.cpp
+    src/Memory/MemoryFoundation.cpp
 )
 
 target_include_directories(nova3d PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
