@@ -1,6 +1,7 @@
 #include <Nova3D.hpp>
 #include <Nova3D/Scene/Scene.hpp>
 #include <Nova3D/Graphics/RenderPipeline/ForwardRenderer.hpp>
+#include <Nova3D/Assets/Importers/OBJImporter.hpp>
 class SandboxApp final : public nova3d::core::IApplication {
 public:
     bool onInitialize(nova3d::core::NovaDevice& device) override {
@@ -13,7 +14,7 @@ public:
         m_camera->setViewport({0,0,1280,720});
         m_camera->lookAt({0,0,0});
         m_scene->setActiveCamera(m_camera);
-        m_meshNode = m_scene->createMeshNode(nova3d::scene::createSimpleTriangleMesh());
+        nova3d::assets::OBJImporter importer; auto model=importer.importFromFile("assets/models/cube.obj"); auto mesh=model?nova3d::scene::createMeshFromModelAsset(*model):nova3d::scene::createSimpleTriangleMesh(); m_meshNode = m_scene->createMeshNode(mesh); auto staticNode=m_scene->createMeshNode(mesh); staticNode->transform().position={1.1F,0,0}; staticNode->transform().markDirty();
         m_scene->createLightNode(std::make_shared<nova3d::scene::DirectionalLight>());
         auto p = std::make_shared<nova3d::scene::PointLight>(); p->range = 15.0F; m_scene->createLightNode(p);
         return true;

@@ -6,6 +6,7 @@
 #include <Nova3D/Graphics/IRenderer.hpp>
 
 namespace nova3d::graphics { class ForwardRenderer; }
+namespace nova3d::assets { struct ModelAsset; }
 namespace nova3d::scene {
 
 struct Light { math::Vector3 color{1,1,1}; float intensity=1.0F; virtual ~Light()=default; };
@@ -13,7 +14,9 @@ struct DirectionalLight final : Light { math::Vector3 direction{0,-1,0}; };
 struct PointLight final : Light { float range=10.0F; math::Vector3 attenuation{1.0F,0.09F,0.032F}; };
 struct SpotLight final : Light { math::Vector3 direction{0,-1,0}; float range=10.0F; float innerCone=0.7F; float outerCone=0.9F; };
 
-struct RenderItem { std::shared_ptr<IMeshBuffer> meshBuffer; math::Matrix4 world;};
+enum class RenderMobility { Static, Dynamic };
+struct MeshDrawPacket { std::shared_ptr<IMeshBuffer> meshBuffer; math::Matrix4 world; std::size_t subMeshIndex=0; RenderMobility mobility=RenderMobility::Dynamic; };
+struct RenderItem { std::shared_ptr<IMeshBuffer> meshBuffer; math::Matrix4 world; std::size_t subMeshIndex=0; RenderMobility mobility=RenderMobility::Dynamic;};
 struct LightingContext { std::vector<DirectionalLight> directionalLights; std::vector<PointLight> pointLights; };
 
 class SceneManager;
@@ -23,8 +26,9 @@ class CameraSceneNode : public SceneNode { public: void setPerspective(float fov
 class MeshSceneNode : public SceneNode { public: explicit MeshSceneNode(std::shared_ptr<IMesh> mesh) : m_mesh(std::move(mesh)) {} void onRegister(SceneManager& mgr) override; math::AABB worldBounds() const override; private: std::shared_ptr<IMesh> m_mesh;};
 class LightSceneNode : public SceneNode { public: explicit LightSceneNode(std::shared_ptr<Light> light):m_light(std::move(light)){} void onRegister(SceneManager& mgr) override; math::AABB worldBounds() const override; private: std::shared_ptr<Light> m_light;};
 
-class SceneManager { public: explicit SceneManager(graphics::IVideoDriver& driver) : m_driver(driver) {} std::shared_ptr<SceneNode> root() const { return m_root; } std::shared_ptr<CameraSceneNode> createCamera(); std::shared_ptr<MeshSceneNode> createMeshNode(const std::shared_ptr<IMesh>& mesh); std::shared_ptr<LightSceneNode> createLightNode(const std::shared_ptr<Light>& light); void setActiveCamera(const std::shared_ptr<CameraSceneNode>& camera) { m_camera = camera; } std::shared_ptr<CameraSceneNode> activeCamera() const { return m_camera; } void update(float dt); void gather(); void registerVisible(const std::shared_ptr<IMeshBuffer>& buffer, const math::Matrix4& world); void registerDirectional(const DirectionalLight& light); void registerPoint(const PointLight& light, const math::Vector3& pos); const std::vector<RenderItem>& opaqueQueue() const { return m_opaqueQueue; } const std::vector<RenderItem>& transparentQueue() const { return m_transparentQueue; } const LightingContext& lighting() const { return m_lighting; } private: graphics::IVideoDriver& m_driver; std::shared_ptr<SceneNode> m_root=std::make_shared<SceneNode>(); std::shared_ptr<CameraSceneNode> m_camera; std::vector<RenderItem> m_opaqueQueue; std::vector<RenderItem> m_transparentQueue; LightingContext m_lighting;};
+class SceneManager { public: explicit SceneManager(graphics::IVideoDriver& driver) : m_driver(driver) {} std::shared_ptr<SceneNode> root() const { return m_root; } std::shared_ptr<CameraSceneNode> createCamera(); std::shared_ptr<MeshSceneNode> createMeshNode(const std::shared_ptr<IMesh>& mesh); std::shared_ptr<LightSceneNode> createLightNode(const std::shared_ptr<Light>& light); void setActiveCamera(const std::shared_ptr<CameraSceneNode>& camera) { m_camera = camera; } std::shared_ptr<CameraSceneNode> activeCamera() const { return m_camera; } void update(float dt); void gather(); void registerVisible(const std::shared_ptr<IMeshBuffer>& buffer, const math::Matrix4& world, RenderMobility mobility=RenderMobility::Dynamic, std::size_t subMeshIndex=0); void registerDirectional(const DirectionalLight& light); void registerPoint(const PointLight& light, const math::Vector3& pos); const std::vector<RenderItem>& opaqueQueue() const { return m_opaqueQueue; } const std::vector<RenderItem>& transparentQueue() const { return m_transparentQueue; } const LightingContext& lighting() const { return m_lighting; } private: graphics::IVideoDriver& m_driver; std::shared_ptr<SceneNode> m_root=std::make_shared<SceneNode>(); std::shared_ptr<CameraSceneNode> m_camera; std::vector<RenderItem> m_staticOpaqueQueue; std::vector<RenderItem> m_dynamicOpaqueQueue; std::vector<RenderItem> m_opaqueQueue; std::vector<RenderItem> m_staticTransparentQueue; std::vector<RenderItem> m_dynamicTransparentQueue; std::vector<RenderItem> m_transparentQueue; LightingContext m_lighting;};
 
 std::shared_ptr<IMesh> createSimpleTriangleMesh();
+std::shared_ptr<IMesh> createMeshFromModelAsset(const assets::ModelAsset& model);
 
 } // namespace
