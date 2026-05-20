@@ -36,10 +36,12 @@ void SceneManager::render() {
     while(!stack.empty()) { auto n=stack.back(); stack.pop_back(); if(n->visible()) { if (auto b=n->worldBounds(); fr.intersects(b)) n->onRegister(*this); for (auto& c : n->children()) stack.push_back(c); } }
     for (auto& item : m_queue) {
         auto vb = m_driver.createVertexBuffer(); auto ib = m_driver.createIndexBuffer();
-        vb->upload(item.meshBuffer->vertices().data(), item.meshBuffer->vertices().size()*sizeof(Vertex));
+        graphics::VertexLayout layout{}; layout.stride=sizeof(Vertex); layout.attributeCount=2; layout.attributes[0]={graphics::VertexSemantic::Position,0,3,offsetof(Vertex, position)}; layout.attributes[1]={graphics::VertexSemantic::Color0,1,3,offsetof(Vertex, color)}; vb->upload(item.meshBuffer->vertices().data(), item.meshBuffer->vertices().size()*sizeof(Vertex), layout);
         ib->upload(item.meshBuffer->indices().data(), item.meshBuffer->indices().size());
+        if (auto material = item.meshBuffer->material()) { m_driver.setRenderState(material->state()); material->bind(); }
         vb->bind(); ib->bind();
         m_driver.drawIndexed(item.meshBuffer->primitiveType(), ib->indexCount());
+        if (auto material = item.meshBuffer->material()) material->unbind();
     }
 }
 

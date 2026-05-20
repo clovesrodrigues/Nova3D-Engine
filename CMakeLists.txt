@@ -20,6 +20,7 @@ add_library(nova3d
     src/IO/FileSystem.cpp
     src/IO/Archives.cpp
     src/Assets/AssetTypes.cpp
+    src/Assets/TextureLoader.cpp
     src/Assets/ImporterRegistry.cpp
     src/Scene/Scene.cpp
 )
