@@ -19,7 +19,7 @@ class IRenderTarget;
 class ITexture {
 public:
     virtual ~ITexture() = default;
-    virtual bool upload(const void* pixels, int width, int height, int channels) = 0;
+    virtual bool upload(const ImageData& image) = 0;
     virtual void bind(std::uint32_t slot) = 0;
     virtual void unbind() = 0;
     virtual void setFilter(TextureFilter minFilter, TextureFilter magFilter) = 0;
@@ -41,7 +41,7 @@ public:
 class IVertexBuffer {
 public:
     virtual ~IVertexBuffer() = default;
-    virtual bool upload(const void* data, std::size_t bytes) = 0;
+    virtual bool upload(const void* data, std::size_t bytes, const VertexLayout& layout) = 0;
     virtual void bind() = 0;
     virtual void unbind() = 0;
 };
@@ -59,7 +59,9 @@ class IMaterial {
 public:
     virtual ~IMaterial() = default;
     virtual void setShader(const std::shared_ptr<IShader>& shader) = 0;
-    virtual void setTexture(const std::shared_ptr<ITexture>& texture) = 0;
+    virtual void setTexture(std::uint32_t slot, const std::shared_ptr<ITexture>& texture) = 0;
+    virtual void bind() = 0;
+    virtual void unbind() = 0;
     virtual void setState(const RenderState& state) = 0;
     virtual const RenderState& state() const = 0;
 };
