@@ -39,3 +39,20 @@ No Win32/X11/NativeActivity API leaks exist in engine core modules.
 - Native build is configured through CMake external native build.
 
 This keeps the engine backend-extensible for future Vulkan without changing app-facing abstractions.
+
+## Renderer Architecture Layer (Foundation)
+
+Nova3D now uses a backend-independent rendering architecture centered on `IRenderer` and `IVideoDriver`, with resource interfaces (`IShader`, `ITexture`, `IVertexBuffer`, `IIndexBuffer`, `IMaterial`, `IRenderTarget`). The engine core interacts only with these abstractions.
+
+`NovaDevice` is the unified runtime access model (Irrlicht-device style): it owns platform services, render context, lifecycle orchestration, and exposes subsystem accessors.
+
+Backend strategy:
+- OpenGL (desktop) and OpenGL ES (Android) are selected internally in platform/render context creation.
+- Public interfaces do not expose OpenGL/GLES headers or enums.
+- Future Vulkan support can be added by implementing the same interfaces and swapping backend selection in factories/context creation.
+
+Ownership model:
+- Device/service lifetime uses `std::unique_ptr`.
+- GPU resources and materials use `std::shared_ptr` to allow safe sharing by higher-level systems.
+
+This layer intentionally excludes scene graph, ECS, asset importers, advanced material/shader systems, and other high-level subsystems.

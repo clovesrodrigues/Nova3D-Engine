@@ -6,7 +6,7 @@
 
 namespace nova3d::core {
 
-bool Engine::initialize(IApplication& app) {
+bool NovaDevice::initialize(IApplication& app) {
     m_app = &app;
     m_platform = platform::createPlatformServices();
     if (!m_platform || !m_platform->initialize()) {
@@ -20,7 +20,7 @@ bool Engine::initialize(IApplication& app) {
         return false;
     }
 
-    if (!m_app->onInitialize()) {
+    if (!m_app->onInitialize(*this)) {
         Logger::error("Application init failed");
         return false;
     }
@@ -30,7 +30,7 @@ bool Engine::initialize(IApplication& app) {
     return true;
 }
 
-void Engine::run() {
+void NovaDevice::run() {
     using clock = std::chrono::steady_clock;
     auto previous = clock::now();
     while (m_running && m_platform->pumpEvents()) {
@@ -44,12 +44,16 @@ void Engine::run() {
     shutdown();
 }
 
-void Engine::shutdown() {
+void NovaDevice::shutdown() {
     if (m_app) m_app->onShutdown();
     if (m_renderContext) m_renderContext->shutdown();
     if (m_platform) m_platform->shutdown();
     m_running = false;
     Logger::info("Nova3D shutdown complete");
 }
+
+platform::IPlatformServices& NovaDevice::platformServices() { return *m_platform; }
+graphics::IRenderContext& NovaDevice::renderContext() { return *m_renderContext; }
+graphics::IVideoDriver& NovaDevice::videoDriver() { return m_renderContext->videoDriver(); }
 
 } // namespace nova3d::core
