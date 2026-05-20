@@ -14,3 +14,10 @@
 #include <Nova3D/Core/Math/Math.hpp>
 #include <Nova3D/Scene/IMesh.hpp>
 #include <Nova3D/Scene/Scene.hpp>
+
+#include <Nova3D/Resources/Resource.hpp>
+#include <Nova3D/Resources/ResourceSystem.hpp>
+#include <Nova3D/IO/FileSystem.hpp>
+#include <Nova3D/IO/Archives.hpp>
+#include <Nova3D/Assets/AssetTypes.hpp>
+#include <Nova3D/Assets/ImporterRegistry.hpp>

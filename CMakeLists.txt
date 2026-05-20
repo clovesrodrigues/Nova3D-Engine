@@ -16,6 +16,11 @@ add_library(nova3d
     src/Platform/SDL/SDLPlatformServices.cpp
     src/Graphics/OpenGL/OpenGLRenderBackend.cpp
     src/Assets/AssetRegistry.cpp
+    src/Resources/ResourceSystem.cpp
+    src/IO/FileSystem.cpp
+    src/IO/Archives.cpp
+    src/Assets/AssetTypes.cpp
+    src/Assets/ImporterRegistry.cpp
     src/Scene/Scene.cpp
 )
 
