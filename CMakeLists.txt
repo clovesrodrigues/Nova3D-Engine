@@ -23,6 +23,7 @@ add_library(nova3d
     src/Assets/TextureLoader.cpp
     src/Assets/ImporterRegistry.cpp
     src/Scene/Scene.cpp
+    src/Graphics/RenderPipeline/ForwardRenderer.cpp
 )
 
 target_include_directories(nova3d PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
