@@ -8,7 +8,7 @@
 namespace nova3d::graphics { class IMaterial; }
 namespace nova3d::scene {
 
-struct Vertex { math::Vector3 position{}; math::Vector3 color{1,1,1}; };
+struct Vertex { math::Vector3 position{}; math::Vector3 normal{}; math::Vector2 uv{}; math::Vector4 color{1,1,1,1}; };
 
 class IMeshBuffer {
 public:

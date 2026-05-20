@@ -1,0 +1,7 @@
+#include <Nova3D/Graphics/Resources/MeshGPUResource.hpp>
+namespace nova3d::graphics {
+bool MeshGPUResource::upload(IVideoDriver& driver,const scene::MeshCPUData& cpu,MeshUsage){ m_vb=driver.createVertexBuffer(); m_ib=driver.createIndexBuffer(); VertexLayout l{}; l.stride=sizeof(scene::MeshVertex); l.attributeCount=4; l.attributes[0]={VertexSemantic::Position,0,3,offsetof(scene::MeshVertex,position)}; l.attributes[1]={VertexSemantic::Normal,1,3,offsetof(scene::MeshVertex,normal)}; l.attributes[2]={VertexSemantic::UV0,2,2,offsetof(scene::MeshVertex,uv)}; l.attributes[3]={VertexSemantic::Color0,3,4,offsetof(scene::MeshVertex,color)}; m_valid=m_vb->upload(cpu.vertices.data(),cpu.vertices.size()*sizeof(scene::MeshVertex),l) && m_ib->upload(cpu.indices.data(),cpu.indices.size()); m_sections.clear(); for(auto& s:cpu.sections) m_sections.push_back({s.indexOffset,s.indexCount,s.materialSlot,s.bounds}); return m_valid; }
+void MeshGPUResource::invalidate(){ m_valid=false; m_vb.reset(); m_ib.reset(); m_sections.clear(); }
+std::shared_ptr<MeshGPUResource> MeshUploadManager::createOrUpdate(IVideoDriver& driver,const scene::MeshCPUData& cpu,MeshUsage usage){ auto r=std::make_shared<MeshGPUResource>(); r->upload(driver,cpu,usage); m_resources.push_back(r); return r; }
+void MeshUploadManager::cleanupInvalid(){ m_resources.erase(std::remove_if(m_resources.begin(),m_resources.end(),[](auto&w){return w.expired()||!w.lock()->valid();}),m_resources.end()); }
+}

@@ -22,6 +22,9 @@ add_library(nova3d
     src/Assets/AssetTypes.cpp
     src/Assets/TextureLoader.cpp
     src/Assets/ImporterRegistry.cpp
+    src/Assets/Importers/OBJImporter.cpp
+    src/Graphics/Resources/MeshGPUResource.cpp
+    src/Graphics/MaterialInstance.cpp
     src/Scene/Scene.cpp
     src/Graphics/RenderPipeline/ForwardRenderer.cpp
 )
