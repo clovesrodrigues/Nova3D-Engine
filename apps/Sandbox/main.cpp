@@ -6,6 +6,9 @@
 #include <Nova3D/Assets/Importers/FBXImporter.hpp>
 #include <Nova3D/GUI/GUI.hpp>
 #include <Nova3D/Editor/RuntimeUIFoundation.hpp>
+#include <Nova3D/Runtime/RuntimeFoundation.hpp>
+#include <Nova3D/Runtime/EngineInfrastructure.hpp>
+#include <Nova3D/Memory/MemoryFoundation.hpp>
 
 class SandboxApp final : public nova3d::core::IApplication {
 public:
@@ -41,10 +44,18 @@ public:
         m_guiManager = std::make_unique<nova3d::gui::GUIManager>(std::make_shared<NullGUIRenderer>());
         m_runtimeUi = nova3d::editor::RuntimeUIFoundation::build(m_guiManager->context());
         auto btn = std::make_shared<nova3d::gui::Button>(); btn->text = "Play/Pause"; btn->rect={30,330,140,30}; btn->onClick=[this](){m_playback=!m_playback;}; m_runtimeUi.assetBrowser->addChild(btn);
+
+        m_scheduler.start(2);
+        m_events.subscribe("resource.loaded", [this](const nova3d::runtime::EngineEvent&){ m_runtimeStats.frame.tasksExecuted++; });
+        m_asyncLoader = std::make_unique<nova3d::runtime::AsyncResourceLoader>(m_scheduler);
+        nova3d::runtime::AsyncResourceRequest req{"sandbox.mesh"};
+        m_asyncLoader->enqueue(req,[this](){ m_streaming.enqueue({"sandbox.chunk", nova3d::runtime::StreamingPriority::Normal}); m_uploads.enqueue({{"mesh-upload",{}}, nova3d::runtime::TaskPriority::Normal}); m_eventQueue.push({"resource.loaded","sandbox.mesh"}); });
         return true;
     }
     void onUpdate(float dt) override {
+        nova3d::runtime::ProfileScope profileScope(m_profiler, "sandbox.update");
         if (m_playback) m_animController.update(dt); m_debug.newFrame(dt); m_guiManager->tick();
+        m_events.pump(m_eventQueue);
         m_angle += dt;
         m_meshNode->transform().rotation = nova3d::math::Quaternion::fromAxisAngle({0,1,0}, m_angle);
         m_meshNode->transform().markDirty();
@@ -53,6 +64,8 @@ public:
         m_debug.drawFrustum(m_camera->frustum(),{1,1,0,1},0.0F);
         m_debug.drawBox(m_meshNode->worldBounds(),{0,1,1,1},0.0F);
         m_renderer->render(*m_scene);
+        m_runtimeStats.frame.frameTimeMs = dt*1000.0F;
+        m_runtimeStats.frame.fps = dt > 0 ? 1.0F/dt : 0.0F;
     }
 private:
     class NullGUIRenderer final : public nova3d::gui::GUIRenderer { public: void beginFrame() override {} void drawQuad(const nova3d::gui::Rect&, const nova3d::math::Vector4&, int) override {} void drawText(const nova3d::gui::Rect&, const std::string&, const nova3d::math::Vector4&, int) override {} void endFrame() override {} };
@@ -68,6 +81,14 @@ private:
     std::shared_ptr<nova3d::scene::MeshSceneNode> m_meshNode;
     nova3d::animation::AnimationController m_animController;
     bool m_playback = true;
+    nova3d::runtime::TaskScheduler m_scheduler;
+    std::unique_ptr<nova3d::runtime::AsyncResourceLoader> m_asyncLoader;
+    nova3d::runtime::Profiler m_profiler;
+    nova3d::runtime::EventBus m_events;
+    nova3d::runtime::EventQueue m_eventQueue;
+    nova3d::runtime::StreamingManager m_streaming;
+    nova3d::runtime::GPUUploadQueue m_uploads;
+    nova3d::runtime::FrameStatistics m_runtimeStats;
     std::unique_ptr<nova3d::gui::GUIManager> m_guiManager;
     nova3d::editor::RuntimeUIFoundation m_runtimeUi;
 };

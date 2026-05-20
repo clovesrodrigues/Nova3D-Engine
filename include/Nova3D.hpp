@@ -32,3 +32,8 @@
 #include <Nova3D/Editor/RuntimeIntrospection.hpp>
 #include <Nova3D/Resources/DependencyGraph.hpp>
 #include <Nova3D/Resources/HotReloadHooks.hpp>
+
+#include <Nova3D/Runtime/TaskSystem.hpp>
+#include <Nova3D/Runtime/RuntimeFoundation.hpp>
+#include <Nova3D/Runtime/EngineInfrastructure.hpp>
+#include <Nova3D/Memory/MemoryFoundation.hpp>
