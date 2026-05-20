@@ -1,0 +1,9 @@
+#include <fstream>
+#include <Nova3D/Terrain/Terrain.hpp>
+namespace nova3d::terrain {
+float HeightmapData::sample(std::uint32_t x,std::uint32_t y) const { if(x>=width||y>=height||heights.empty()) return 0.0F; return heights[static_cast<size_t>(y*width+x)]; }
+scene::MeshCPUData TerrainMesh::generateFromHeightmap(const HeightmapData& hm, float sxz, float sy) const { scene::MeshCPUData mesh; if(hm.width<2||hm.height<2) return mesh; mesh.vertices.reserve(hm.width*hm.height); for(std::uint32_t y=0;y<hm.height;++y) for(std::uint32_t x=0;x<hm.width;++x){ float h=hm.sample(x,y)*sy; mesh.vertices.push_back({{x*sxz,h,y*sxz},{0,1,0},{static_cast<float>(x)/hm.width,static_cast<float>(y)/hm.height},{1,1,1,1}}); } for(std::uint32_t y=0;y+1<hm.height;++y) for(std::uint32_t x=0;x+1<hm.width;++x){ auto i0=y*hm.width+x,i1=i0+1,i2=i0+hm.width,i3=i2+1; mesh.indices.insert(mesh.indices.end(),{i0,i2,i1,i1,i2,i3}); } mesh.bounds={{0,0,0},{(hm.width-1)*sxz,sy,(hm.height-1)*sxz}}; return mesh; }
+bool HeightmapTerrain::loadHeightmapImage(const std::string&){ return false; }
+bool HeightmapTerrain::loadHeightmapRaw(const std::string& path, std::uint32_t w, std::uint32_t h){ std::ifstream in(path,std::ios::binary); if(!in) return false; std::vector<std::uint16_t> raw(static_cast<size_t>(w*h)); in.read(reinterpret_cast<char*>(raw.data()), static_cast<std::streamsize>(raw.size()*sizeof(std::uint16_t))); if(!in) return false; m_heightmap={w,h,{}}; m_heightmap.heights.reserve(raw.size()); for(auto v:raw) m_heightmap.heights.push_back(static_cast<float>(v)/65535.0F); return true; }
+void HeightmapTerrain::buildPatches(std::uint32_t patchSize, float scaleXZ, float scaleY){ m_patches.clear(); TerrainMesh gen; auto full=gen.generateFromHeightmap(m_heightmap,scaleXZ,scaleY); if(full.vertices.empty()) return; TerrainPatch p{}; p.size=patchSize; p.mesh=std::move(full); p.bounds=p.mesh.bounds; m_patches.push_back(std::move(p)); }
+}
