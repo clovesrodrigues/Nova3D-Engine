@@ -21,9 +21,29 @@ public:
         m_camera->setViewport({0,0,1280,720});
         m_camera->lookAt({0,0,0});
         m_scene->setActiveCamera(m_camera);
-        auto importer = nova::asset::NModelImporter(nova::asset::createDefaultAssimpImporterBackend()); auto model=importer.importFromFile("assets/models/cube.obj"); auto mesh=model?nova3d::scene::createMeshFromModelAsset(*model):nova3d::scene::createSimpleTriangleMesh();
-        m_meshNode = m_scene->createMeshNode(mesh);
-        auto staticNode=m_scene->createMeshNode(mesh); staticNode->transform().position={2.0F,0,0}; staticNode->transform().markDirty();
+                nova3d::scene::NSpawnReport reportA{};
+        nova3d::scene::NPlacementOptions base{};
+        base.initialPosition = {0.0F, 0.0F, 0.0F};
+        base.debugName = "pivot-center";
+        m_scene->spawnModel("assets/models/cube.obj", base, &reportA);
+        nova3d::core::Logger::info("[Test A] center nodes=" + std::to_string(reportA.createdNodeCount));
+
+        auto bottom = base; bottom.initialPosition = {2.0F, 0.0F, 0.0F}; bottom.pivotMode = nova3d::scene::NPivotMode::BottomCenter;
+        nova3d::scene::NSpawnReport reportB{}; m_scene->spawnModel("assets/models/cube.obj", bottom, &reportB);
+        nova3d::core::Logger::info("[Test B] bottom pivot world y=" + std::to_string(reportB.computedPivotWorld.y));
+
+        auto top = base; top.initialPosition = {-2.0F, 0.0F, 0.0F}; top.pivotMode = nova3d::scene::NPivotMode::TopCenter;
+        nova3d::scene::NSpawnReport reportC{}; m_scene->spawnModel("assets/models/cube.obj", top, &reportC);
+
+        auto custom = base; custom.initialPosition = {0.0F, 0.0F, 2.0F}; custom.pivotMode = nova3d::scene::NPivotMode::Custom; custom.customPivotOffset = {0.0F, -1.0F, 0.0F};
+        nova3d::scene::NSpawnReport reportD{}; m_scene->spawnModel("assets/models/cube.obj", custom, &reportD);
+
+        auto look = base; look.initialPosition = {0.0F, 0.0F, -2.0F}; look.useLookAt = true; look.lookAtTarget = {0.0F, 0.0F, 0.0F};
+        nova3d::scene::NSpawnReport reportE{}; m_scene->spawnModel("assets/models/cube.obj", look, &reportE);
+        nova3d::core::Logger::info("[Test E] look-at warnings=" + std::to_string(reportE.warnings.size()));
+
+        m_meshNode = m_scene->createMeshNode(nova3d::scene::createSimpleTriangleMesh());
+        auto staticNode=m_scene->createMeshNode(nova3d::scene::createSimpleTriangleMesh()); staticNode->transform().position={2.0F,0,0}; staticNode->transform().markDirty();
         m_scene->createLightNode(std::make_shared<nova3d::scene::DirectionalLight>());
 
         nova3d::reflection::TypeRegistry::instance().registerType({"MeshSceneNode","SceneNode",{{"visible","bool",{true,0,0,"Rendering",true,true}}},{}});
