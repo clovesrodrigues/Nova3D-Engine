@@ -38,4 +38,3 @@ class NGUIElementFactory { public: using Creator=std::function<std::shared_ptr<G
 class NGUILoader { public: static bool loadLayoutJson(const std::string& path, GUIContext& ctx, NGUIElementFactory& factory, std::shared_ptr<NGUISkin> skin);};
 
 }
-namespace nova::gui = nova3d::gui;

@@ -1,7 +1,7 @@
 #include <Nova3D/GUI/GUI.hpp>
 #include <Nova3D/Core/Logger.hpp>
 #include <Nova3D/IO/FileSystem.hpp>
-#include <nlohmann/json.hpp>
+#include <regex>
 namespace nova3d::gui {
 NGUITheme NGUITheme::dark(){NGUITheme t; t.name="dark"; t.colors["widget.normal"]={0.2F,0.2F,0.2F,1}; t.colors["widget.hover"]={0.3F,0.3F,0.35F,1}; t.colors["widget.pressed"]={0.4F,0.4F,0.5F,1}; t.colors["text"]={1,1,1,1}; return t;}
 NGUITheme NGUITheme::light(){auto t=dark(); t.name="light"; t.colors["widget.normal"]={0.85F,0.85F,0.85F,1}; t.colors["widget.hover"]={0.75F,0.75F,0.8F,1}; t.colors["widget.pressed"]={0.65F,0.65F,0.7F,1}; t.colors["text"]={0.1F,0.1F,0.1F,1}; return t;}
@@ -9,7 +9,7 @@ math::Vector4 NGUIStyleResolver::color(const NGUITheme& theme,const NGUIStyleShe
 void NGUISkin::setTheme(NGUITheme theme){m_theme=std::move(theme); for(auto& cb:m_listeners) cb();}
 void GUIElement::draw(GUIRenderer& r){for(auto& c:m_children) if(c->visible) c->draw(r);} bool GUIElement::handle(const GUIInputEvent& ev){for(auto it=m_children.rbegin();it!=m_children.rend();++it) if((*it)->visible && (*it)->handle(ev)) return true; return false;}
 bool GUIWidget::handle(const GUIInputEvent& ev){ if(!enabled||!visible) return false; if(ev.type==GUIInputEvent::Type::MouseMove) hovered=rect.contains((float)ev.x,(float)ev.y); if(ev.type==GUIInputEvent::Type::MouseDown && hovered){pressed=true; focused=true; return true;} if(ev.type==GUIInputEvent::Type::MouseUp){ bool was=pressed; pressed=false; if(was&&hovered&&onClick) onClick(); return was&&hovered;} return GUIElement::handle(ev);} 
-void GUIWidget::draw(GUIRenderer& r){ NGUIStyleResolver resolver; math::Vector4 color=enabled?math::Vector4{0.2F,0.2F,0.2F,1}:{0.1F,0.1F,0.1F,1}; if(m_skin){ const auto& theme=m_skin->theme(); color=resolver.color(theme,m_skin->styleSheet(),styleClass,"widget.normal",color); if(hovered) color=resolver.color(theme,m_skin->styleSheet(),styleClass,"widget.hover",color); if(pressed) color=resolver.color(theme,m_skin->styleSheet(),styleClass,"widget.pressed",color);} else {if(hovered) color={0.3F,0.3F,0.35F,1}; if(pressed) color={0.4F,0.4F,0.5F,1};} r.drawQuad(rect,color,0); if(!text.empty()) r.drawText(rect,text,{1,1,1,1},1); GUIElement::draw(r);} 
+void GUIWidget::draw(GUIRenderer& r){ NGUIStyleResolver resolver; math::Vector4 color = enabled ? math::Vector4{0.2F,0.2F,0.2F,1.0F} : math::Vector4{0.1F,0.1F,0.1F,1.0F}; if(m_skin){ const auto& theme=m_skin->theme(); color=resolver.color(theme,m_skin->styleSheet(),styleClass,"widget.normal",color); if(hovered) color=resolver.color(theme,m_skin->styleSheet(),styleClass,"widget.hover",color); if(pressed) color=resolver.color(theme,m_skin->styleSheet(),styleClass,"widget.pressed",color);} else {if(hovered) color={0.3F,0.3F,0.35F,1}; if(pressed) color={0.4F,0.4F,0.5F,1};} r.drawQuad(rect,color,0); if(!text.empty()) r.drawText(rect,text,{1,1,1,1},1); GUIElement::draw(r);} 
 bool NMeshViewerWidget::handle(const GUIInputEvent& ev){ if(!GUIWidget::handle(ev)){ if(ev.type==GUIInputEvent::Type::MouseWheel && rect.contains((float)ev.x,(float)ev.y)){ state.zoom += ev.wheelY*0.05F; if(state.zoom<0.2F) state.zoom=0.2F; return true;} return false;} if(ev.type==GUIInputEvent::Type::MouseMove && pressed){ state.orbitYaw += ev.x*0.0005F; state.orbitPitch += ev.y*0.0005F; } return true; }
 void NMeshViewerWidget::draw(GUIRenderer& r){ GUIWidget::draw(r); r.drawText({rect.x+8,rect.y+8,rect.w-16,20},"Asset Preview: "+state.meshPath,state.tint,2); }
 bool GUIContext::route(const GUIInputEvent& ev){ for(auto it=m_root.rbegin();it!=m_root.rend();++it) if((*it)->handle(ev)) return true; return false;} void GUIContext::draw(GUIRenderer& r){ for(auto& e:m_root) if(e->visible) e->draw(r);} void GUIManager::tick(){ if(!m_renderer) return; m_renderer->beginFrame(); m_ctx.draw(*m_renderer); m_renderer->endFrame(); }
@@ -19,5 +19,21 @@ NDialogResult NFileDialog::save(const std::string& title,const std::string& filt
 NDialogResult NColorDialog::pick(const math::Vector4& seed){ core::Logger::info("[GUI] ColorDialog pick fallback backend"); return {true,{},seed}; }
 NDialogResult NMessageBox::show(const std::string& title,const std::string& message,Type,Buttons buttons){ core::Logger::info("[GUI] MessageBox: "+title+" / "+message); return {true,{}, {1,1,1,1}, buttons==Buttons::YesNo?1:0}; }
 void NGUIElementFactory::registerType(const std::string& type, Creator creator){ static std::unordered_map<std::string,Creator> creators; creators[type]=std::move(creator);} std::shared_ptr<GUIElement> NGUIElementFactory::create(const std::string& type) const { static std::unordered_map<std::string,Creator> creators; if(auto it=creators.find(type); it!=creators.end()) return it->second(); return nullptr;}
-bool NGUILoader::loadLayoutJson(const std::string& path, GUIContext& ctx, NGUIElementFactory&, std::shared_ptr<NGUISkin> skin){ auto content=io::FileSystem::readText(path); if(content.empty()){ core::Logger::error("[GUI] Layout not found: "+path); return false;} auto json=nlohmann::json::parse(content, nullptr, false); if(json.is_discarded()){ core::Logger::error("[GUI] Invalid layout json: "+path); return false;} for(auto& node:json["widgets"]){ auto b=std::make_shared<Button>(); b->id=node.value("id",""); b->text=node.value("text",""); auto r=node["rect"]; b->rect={r.value("x",0.0F),r.value("y",0.0F),r.value("w",120.0F),r.value("h",28.0F)}; b->visible=node.value("visible",true); b->enabled=node.value("enabled",true); b->styleClass=node.value("styleClass",""); b->setSkin(skin); ctx.addRoot(b);} return true; }
+bool NGUILoader::loadLayoutJson(const std::string& path, GUIContext& ctx, NGUIElementFactory&, std::shared_ptr<NGUISkin> skin){
+    io::FileSystem fs; auto content=fs.readText(path);
+    if(content.empty()){ core::Logger::error("[GUI] Layout not found: "+path); return false;}
+    std::regex widgetRe("\\{[^\\{\\}]*\"id\"\\s*:\\s*\"([^\"]*)\"[^\\{\\}]*\"text\"\\s*:\\s*\"([^\"]*)\"[^\\{\\}]*\"x\"\\s*:\\s*([0-9\\.-]+)[^\\{\\}]*\"y\"\\s*:\\s*([0-9\\.-]+)[^\\{\\}]*\"w\"\\s*:\\s*([0-9\\.-]+)[^\\{\\}]*\"h\"\\s*:\\s*([0-9\\.-]+)");
+    std::smatch m;
+    std::string s=content;
+    bool any=false;
+    while(std::regex_search(s,m,widgetRe)){
+        auto b=std::make_shared<Button>();
+        b->id=m[1].str(); b->text=m[2].str();
+        b->rect={std::stof(m[3].str()),std::stof(m[4].str()),std::stof(m[5].str()),std::stof(m[6].str())};
+        b->visible=true; b->enabled=true; b->setSkin(skin); ctx.addRoot(b); any=true;
+        s=m.suffix().str();
+    }
+    if(!any){ core::Logger::error("[GUI] Invalid layout json: "+path); return false; }
+    return true;
+}
 }
