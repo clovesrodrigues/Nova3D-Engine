@@ -8,11 +8,15 @@ std::shared_ptr<ImportedFBXScene> FBXImporter::importFromFile(const std::string&
 }
 
 std::shared_ptr<ImportedFBXScene> StubFBXImporterBackend::importScene(const std::string& path) const {
-    auto modelBackend = nova::asset::createDefaultAssimpImporterBackend();
-    auto model = modelBackend->importModel(path);
-    if (!model) return {};
+    nova::asset::NModelImporter importer;
+    auto model = importer.importFromFile(path);
+    if (!model.report.success || model.data.meshes.empty()) return {};
     auto out = std::make_shared<ImportedFBXScene>();
-    out->meshes.push_back(model);
+    auto converted = std::make_shared<ModelAsset>();
+    converted->mesh.vertices = model.data.meshes[0].vertices;
+    converted->mesh.indices = model.data.meshes[0].indices;
+    converted->mesh.sections = model.data.meshes[0].submeshes;
+    out->meshes.push_back(std::move(converted));
     return out;
 }
 }

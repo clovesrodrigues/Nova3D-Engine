@@ -101,3 +101,14 @@ Documentação operacional oficial:
 ## Licença
 
 MIT
+
+## Import regression tests
+
+Run the import regression suite:
+
+```bash
+cmake --build build --target nova_asset_validator
+./build/apps/AssetValidator/nova_asset_validator assets/tests/import
+```
+
+Format policy matrix: `docs/import_format_matrix.md`.
