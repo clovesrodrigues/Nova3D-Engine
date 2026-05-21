@@ -2,6 +2,11 @@
 #include <Nova3D/Core/Logger.hpp>
 #include <Nova3D/Platform/IWindow.hpp>
 #include <SDL.h>
+#if !defined(__ANDROID__)
+#ifndef GL_GLEXT_PROTOTYPES
+#define GL_GLEXT_PROTOTYPES
+#endif
+#endif
 #if defined(__ANDROID__)
 #include <GLES3/gl3.h>
 #else

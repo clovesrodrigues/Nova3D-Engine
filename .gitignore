@@ -1,1 +1,18 @@
-/build/
+# se houver
+obj/
+models/
+media/
+training/
+
+# Ignorar arquivos de configuração e layout do Code::Blocks
+*.cbp
+*.depend
+*.layout
+
+# Ignorar executáveis e objetos binários de build local
+*.exe
+*.o
+*.obj
+
+# Ignorar configurações locais do VS Code
+.vscode/

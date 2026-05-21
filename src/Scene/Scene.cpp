@@ -30,6 +30,6 @@ void SceneManager::gather(){ if(!m_camera) return; rebuildSpatial(); m_opaqueQue
 class MeshBuffer final : public IMeshBuffer { public: std::vector<Vertex> v; std::vector<std::uint32_t> i; math::AABB box; graphics::PrimitiveType type=graphics::PrimitiveType::Triangles; std::shared_ptr<graphics::IMaterial> mat; const std::vector<Vertex>& vertices() const override {return v;} const std::vector<std::uint32_t>& indices() const override {return i;} graphics::PrimitiveType primitiveType() const override {return type;} const math::AABB& boundingBox() const override {return box;} std::shared_ptr<graphics::IMaterial> material() const override {return mat;} };
 class Mesh final : public IMesh { public: std::vector<std::shared_ptr<IMeshBuffer>> bufs; math::AABB box; std::size_t meshBufferCount() const override {return bufs.size();} std::shared_ptr<IMeshBuffer> meshBuffer(std::size_t idx) const override {return bufs.at(idx);} const math::AABB& boundingBox() const override {return box;} };
 std::shared_ptr<IMesh> createSimpleTriangleMesh(){ auto mb=std::make_shared<MeshBuffer>(); mb->v={{{0,0.6F,0},{0,0,1},{0.5F,1.0F},{1,0,0,1}},{{-0.6F,-0.6F,0},{0,0,1},{0,0},{0,1,0,1}},{{0.6F,-0.6F,0},{0,0,1},{1,0},{0,0,1,1}}}; mb->i={0,1,2}; mb->box={{-0.6F,-0.6F,0},{0.6F,0.6F,0}}; auto m=std::make_shared<Mesh>(); m->bufs.push_back(mb); m->box=mb->box; return m; }
-}
-
 std::shared_ptr<IMesh> createMeshFromModelAsset(const assets::ModelAsset& model){ auto mb=std::make_shared<MeshBuffer>(); for(auto &v:model.mesh.vertices) mb->v.push_back({v.position,v.normal,v.uv,v.color}); mb->i=model.mesh.indices; mb->box=model.mesh.bounds; auto m=std::make_shared<Mesh>(); m->bufs.push_back(mb); m->box=model.mesh.bounds; return m; }
+
+}

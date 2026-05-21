@@ -1,7 +1,6 @@
 #include <Nova3D.hpp>
 #include <Nova3D/Scene/Scene.hpp>
 #include <Nova3D/Graphics/RenderPipeline/ForwardRenderer.hpp>
-#include <Nova3D/Assets/Importers/OBJImporter.hpp>
 #include <Nova3D/Animation/AnimationState.hpp>
 #include <Nova3D/Assets/Importers/FBXImporter.hpp>
 #include <Nova3D/GUI/GUI.hpp>
@@ -22,7 +21,14 @@ public:
         m_camera->setViewport({0,0,1280,720});
         m_camera->lookAt({0,0,0});
         m_scene->setActiveCamera(m_camera);
-        nova3d::assets::OBJImporter importer; auto model=importer.importFromFile("assets/models/cube.obj"); auto mesh=model?nova3d::scene::createMeshFromModelAsset(*model):nova3d::scene::createSimpleTriangleMesh();
+        auto importer = nova::asset::NModelImporter(nova::asset::createDefaultAssimpImporterBackend());
+        nova::asset::NImportStats objStats{};
+        auto model = importer.importFromFile("assets/models/test.obj", objStats);
+        nova3d::core::Logger::info("Sandbox OBJ stats nodes=" + std::to_string(objStats.nodeCount) + " meshes=" + std::to_string(objStats.meshCount) + " materials=" + std::to_string(objStats.materialCount) + " anims=" + std::to_string(objStats.animationCount));
+        nova::asset::NImportStats fbxStats{};
+        auto fbxModel = importer.importFromFile("assets/models/test.fbx", fbxStats);
+        nova3d::core::Logger::info("Sandbox FBX stats nodes=" + std::to_string(fbxStats.nodeCount) + " meshes=" + std::to_string(fbxStats.meshCount) + " materials=" + std::to_string(fbxStats.materialCount) + " anims=" + std::to_string(fbxStats.animationCount));
+        auto mesh=model?nova3d::scene::createMeshFromModelAsset(*model):(fbxModel?nova3d::scene::createMeshFromModelAsset(*fbxModel):nova3d::scene::createSimpleTriangleMesh());
         m_meshNode = m_scene->createMeshNode(mesh);
         auto staticNode=m_scene->createMeshNode(mesh); staticNode->transform().position={2.0F,0,0}; staticNode->transform().markDirty();
         m_scene->createLightNode(std::make_shared<nova3d::scene::DirectionalLight>());
@@ -36,11 +42,7 @@ public:
         const auto prefabJson=nova3d::scene::PrefabSerializer::toJson(m_prefabInstance);
         nova3d::core::Logger::info("Scene JSON bytes: "+std::to_string(m_savedSceneJson.size())+", Prefab JSON bytes: "+std::to_string(prefabJson.size()));
 
-        nova3d::assets::FBXImporter fbx; fbx.setBackend(std::make_shared<nova3d::assets::StubFBXImporterBackend>()); auto imported = fbx.importFromFile("assets/models/character.fbx");
-        if (imported && !imported->skeletons.empty() && !imported->animations.empty() && !imported->animations.front().clips.empty()) {
-            m_animController.setSkeleton(imported->skeletons.front().skeleton);
-            nova3d::animation::AnimationPlayer p; p.setClip(imported->animations.front().clips.front()); p.state().play(); m_animController.addPlayer(std::move(p));
-        }
+        if (m_audio.initialize() && m_clip.loadFromFile("assets/audio/test.wav")) { m_voice = m_audio.play(m_clip, 0.6F, true); }
         m_guiManager = std::make_unique<nova3d::gui::GUIManager>(std::make_shared<NullGUIRenderer>());
         m_runtimeUi = nova3d::editor::RuntimeUIFoundation::build(m_guiManager->context());
         auto btn = std::make_shared<nova3d::gui::Button>(); btn->text = "Play/Pause"; btn->rect={30,330,140,30}; btn->onClick=[this](){m_playback=!m_playback;}; m_runtimeUi.assetBrowser->addChild(btn);
@@ -67,6 +69,7 @@ public:
         m_runtimeStats.frame.frameTimeMs = dt*1000.0F;
         m_runtimeStats.frame.fps = dt > 0 ? 1.0F/dt : 0.0F;
     }
+    void onShutdown() override { m_audio.stop(m_voice); m_audio.shutdown(); }
 private:
     class NullGUIRenderer final : public nova3d::gui::GUIRenderer { public: void beginFrame() override {} void drawQuad(const nova3d::gui::Rect&, const nova3d::math::Vector4&, int) override {} void drawText(const nova3d::gui::Rect&, const std::string&, const nova3d::math::Vector4&, int) override {} void endFrame() override {} };
     float m_angle = 0.0F;
@@ -81,6 +84,9 @@ private:
     std::shared_ptr<nova3d::scene::MeshSceneNode> m_meshNode;
     nova3d::animation::AnimationController m_animController;
     bool m_playback = true;
+    nova::audio::NAudioDevice m_audio;
+    nova::audio::NAudioClip m_clip;
+    nova::audio::NAudioVoiceHandle m_voice{};
     nova3d::runtime::TaskScheduler m_scheduler;
     std::unique_ptr<nova3d::runtime::AsyncResourceLoader> m_asyncLoader;
     nova3d::runtime::Profiler m_profiler;

@@ -1,0 +1,47 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "mingw-debug",
+      "displayName": "MinGW Debug",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/mingw-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "NOVA3D_REQUIRE_OPENGL": "ON",
+        "NOVA3D_BUILD_SANDBOX": "ON",
+        "NOVA3D_BUILD_VALIDATION": "ON"
+      }
+    },
+    {
+      "name": "mingw-release",
+      "displayName": "MinGW Release",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/mingw-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "NOVA3D_REQUIRE_OPENGL": "ON",
+        "NOVA3D_BUILD_SANDBOX": "ON",
+        "NOVA3D_BUILD_VALIDATION": "ON"
+      }
+    },
+    {
+      "name": "mingw-headless",
+      "displayName": "MinGW Headless",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/mingw-headless",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "NOVA3D_REQUIRE_OPENGL": "OFF",
+        "NOVA3D_BUILD_SANDBOX": "OFF",
+        "NOVA3D_BUILD_VALIDATION": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {"name": "mingw-debug", "configurePreset": "mingw-debug"},
+    {"name": "mingw-release", "configurePreset": "mingw-release"},
+    {"name": "mingw-headless", "configurePreset": "mingw-headless"}
+  ]
+}

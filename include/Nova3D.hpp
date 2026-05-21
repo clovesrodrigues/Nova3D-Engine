@@ -37,3 +37,7 @@
 #include <Nova3D/Runtime/RuntimeFoundation.hpp>
 #include <Nova3D/Runtime/EngineInfrastructure.hpp>
 #include <Nova3D/Memory/MemoryFoundation.hpp>
+
+#include <Nova3D/Platform/NPlatform.hpp>
+#include <Nova3D/Assets/Importers/NModelImporter.hpp>
+#include <Nova3D/Audio/NAudio.hpp>

@@ -10,6 +10,7 @@ namespace nova3d::core {
 
 class NovaDevice {
 public:
+    ~NovaDevice();
     bool initialize(IApplication& app);
     void run();
     void shutdown();

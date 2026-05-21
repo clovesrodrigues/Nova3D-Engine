@@ -2,9 +2,12 @@
 #include <Nova3D/Core/IApplication.hpp>
 #include <Nova3D/Core/Logger.hpp>
 #include <Nova3D/Platform/PlatformFactory.hpp>
+#include <Nova3D/Graphics/IRenderContext.hpp>
 #include <chrono>
 
 namespace nova3d::core {
+
+NovaDevice::~NovaDevice() = default;
 
 bool NovaDevice::initialize(IApplication& app) {
     m_app = &app;
