@@ -11,6 +11,7 @@ constexpr float kPi = 3.14159265358979323846F;
 inline float toRadians(float degrees) { return degrees * (kPi / 180.0F); }
 
 struct Vector2 { float x=0,y=0; };
+template <typename T> struct TVector3 { T x=0,y=0,z=0; };
 struct Vector3 { float x=0,y=0,z=0;
     Vector3 operator+(const Vector3& r) const { return {x+r.x,y+r.y,z+r.z}; }
     Vector3 operator-(const Vector3& r) const { return {x-r.x,y-r.y,z-r.z}; }
@@ -20,6 +21,9 @@ struct Vector3 { float x=0,y=0,z=0;
     float length() const { return std::sqrt(dot(*this)); }
     Vector3 normalized() const { float l=length(); return l>0?(*this)*(1.0F/l):Vector3{}; }
 };
+using Vector3f = TVector3<float>;
+using Vector3d = TVector3<double>;
+using Vector3i = TVector3<int>;
 struct Vector4 { float x=0,y=0,z=0,w=0; };
 
 struct Quaternion { float w=1,x=0,y=0,z=0;
@@ -32,6 +36,7 @@ struct Matrix4 {
     float& at(int r,int c){ return m[c*4+r]; }
     float at(int r,int c) const { return m[c*4+r]; }
     Matrix4 operator*(const Matrix4& b) const { Matrix4 r{}; r.m.fill(0); for(int row=0;row<4;++row)for(int col=0;col<4;++col)for(int k=0;k<4;++k) r.at(row,col)+=at(row,k)*b.at(k,col); return r; }
+    Vector3 transformPoint(const Vector3& v) const { float x=at(0,0)*v.x+at(0,1)*v.y+at(0,2)*v.z+at(0,3); float y=at(1,0)*v.x+at(1,1)*v.y+at(1,2)*v.z+at(1,3); float z=at(2,0)*v.x+at(2,1)*v.y+at(2,2)*v.z+at(2,3); float w=at(3,0)*v.x+at(3,1)*v.y+at(3,2)*v.z+at(3,3); if(std::abs(w)>1e-6F){ x/=w; y/=w; z/=w; } return {x,y,z}; }
     static Matrix4 translation(const Vector3& t){ Matrix4 r=identity(); r.at(0,3)=t.x; r.at(1,3)=t.y; r.at(2,3)=t.z; return r; }
     static Matrix4 scaling(const Vector3& s){ Matrix4 r=identity(); r.at(0,0)=s.x; r.at(1,1)=s.y; r.at(2,2)=s.z; return r; }
     static Matrix4 rotation(const Quaternion& q){ Matrix4 r=identity(); float xx=q.x*q.x,yy=q.y*q.y,zz=q.z*q.z,xy=q.x*q.y,xz=q.x*q.z,yz=q.y*q.z,wx=q.w*q.x,wy=q.w*q.y,wz=q.w*q.z; r.at(0,0)=1-2*(yy+zz); r.at(0,1)=2*(xy-wz); r.at(0,2)=2*(xz+wy); r.at(1,0)=2*(xy+wz); r.at(1,1)=1-2*(xx+zz); r.at(1,2)=2*(yz-wx); r.at(2,0)=2*(xz-wy); r.at(2,1)=2*(yz+wx); r.at(2,2)=1-2*(xx+yy); return r; }

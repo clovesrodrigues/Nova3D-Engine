@@ -21,6 +21,11 @@ public:
         m_camera->setViewport({0,0,1280,720});
         m_camera->lookAt({0,0,0});
         m_scene->setActiveCamera(m_camera);
+        auto cameraTarget = m_scene->createCameraTargetNode({0.0F,0.0F,-1.0F});
+        cameraTarget->transform().position = {0,2,3};
+        cameraTarget->setFollowLinkedNode(false);
+        m_camera->setTargetNode(cameraTarget);
+        m_camera->setCameraTargetLocked(true);
                 nova3d::scene::NSpawnReport reportA{};
         nova3d::scene::NPlacementOptions base{};
         base.initialPosition = {0.0F, 0.0F, 0.0F};
@@ -53,6 +58,7 @@ public:
         m_collisionAnimator=std::make_shared<nova3d::scene::NAnimatorCollisionResponse>(m_scene->collisionManager());
         m_scene->animatorController().attach(m_camera,m_collisionAnimator);
         m_scene->createLightNode(std::make_shared<nova3d::scene::DirectionalLight>());
+        auto billboard = m_scene->createBillboardNode({1.0F,1.0F}); billboard->transform().position={0.0F,1.2F,0.0F}; billboard->setPickingEnabled(false);
 
         nova3d::reflection::TypeRegistry::instance().registerType({"MeshSceneNode","SceneNode",{{"visible","bool",{true,0,0,"Rendering",true,true}}},{}});
         m_objId = m_registry.registerObject(m_meshNode);
