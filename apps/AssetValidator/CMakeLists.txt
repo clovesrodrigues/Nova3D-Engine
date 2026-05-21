@@ -1,0 +1,2 @@
+add_executable(nova_asset_validator main.cpp)
+target_link_libraries(nova_asset_validator PRIVATE nova3d)

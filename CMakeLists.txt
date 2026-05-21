@@ -122,3 +122,5 @@ endfunction()
 if(NOVA3D_BUILD_SANDBOX)
     add_subdirectory(apps/Sandbox)
 endif()
+
+add_subdirectory(apps/AssetValidator)
