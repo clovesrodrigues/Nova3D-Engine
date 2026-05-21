@@ -1,7 +1,12 @@
 {
   "version": 1,
   "widgets": [
-    {"type":"Button","id":"load_model","text":"Load Model","rect":{"x":24,"y":24,"w":160,"h":30},"visible":true,"enabled":true,"styleClass":"primary"},
-    {"type":"Button","id":"toggle_wire","text":"Wireframe","rect":{"x":24,"y":60,"w":160,"h":30},"visible":true,"enabled":true,"styleClass":"secondary"}
+    {"type":"window","id":"main","parent":"","text":"Nova3D GUI Demo","rect":{"x":12,"y":12,"w":1240,"h":680},"visible":true,"enabled":true,"styleClass":"window","onClick":""},
+    {"type":"panel","id":"left_panel","parent":"main","text":"Actions","rect":{"x":24,"y":48,"w":260,"h":620},"visible":true,"enabled":true,"styleClass":"panel","onClick":""},
+    {"type":"button","id":"load_model","parent":"left_panel","text":"Load Model","rect":{"x":32,"y":68,"w":220,"h":34},"visible":true,"enabled":true,"styleClass":"primary","onClick":"action.load_model"},
+    {"type":"button","id":"pick_color","parent":"left_panel","text":"Pick Accent","rect":{"x":32,"y":110,"w":220,"h":34},"visible":true,"enabled":true,"styleClass":"primary","onClick":"action.pick_color"},
+    {"type":"button","id":"message","parent":"left_panel","text":"Message","rect":{"x":32,"y":152,"w":220,"h":34},"visible":true,"enabled":true,"styleClass":"secondary","onClick":"action.message"},
+    {"type":"button","id":"toggle_theme","parent":"left_panel","text":"Toggle Theme","rect":{"x":32,"y":194,"w":220,"h":34},"visible":true,"enabled":true,"styleClass":"secondary","onClick":"action.toggle_theme"},
+    {"type":"meshviewer","id":"viewer","parent":"main","text":"","rect":{"x":300,"y":48,"w":940,"h":620},"visible":true,"enabled":true,"styleClass":"viewer","onClick":""}
   ]
 }
