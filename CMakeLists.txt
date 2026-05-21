@@ -7,7 +7,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(NOVA3D_BUILD_SANDBOX "Build sandbox app" ON)
 
-find_package(SDL2 REQUIRED)
+set(NOVA3D_THIRD_PARTY_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/include")
+set(NOVA3D_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+set(NOVA3D_BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 
 add_library(nova3d
     src/Core/Logger.cpp
@@ -52,9 +54,37 @@ add_library(nova3d
     src/Memory/MemoryFoundation.cpp
 )
 
-target_include_directories(nova3d PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(Nova3D::SDL2 SHARED IMPORTED GLOBAL)
+set_target_properties(Nova3D::SDL2 PROPERTIES
+    IMPORTED_IMPLIB "${NOVA3D_LIB_DIR}/libSDL2.dll.a"
+    IMPORTED_LOCATION "${NOVA3D_BIN_DIR}/SDL2.dll"
+    INTERFACE_INCLUDE_DIRECTORIES "${NOVA3D_THIRD_PARTY_INCLUDE_DIR}/SDL2"
+)
 
-target_link_libraries(nova3d PUBLIC SDL2::SDL2)
+add_library(Nova3D::GLFW STATIC IMPORTED GLOBAL)
+set_target_properties(Nova3D::GLFW PROPERTIES
+    IMPORTED_LOCATION "${NOVA3D_LIB_DIR}/libglfw3.a"
+    INTERFACE_INCLUDE_DIRECTORIES "${NOVA3D_THIRD_PARTY_INCLUDE_DIR}/GLFW"
+)
+
+add_library(Nova3D::Assimp SHARED IMPORTED GLOBAL)
+set_target_properties(Nova3D::Assimp PROPERTIES
+    IMPORTED_IMPLIB "${NOVA3D_LIB_DIR}/libassimp.dll.a"
+    IMPORTED_LOCATION "${NOVA3D_BIN_DIR}/libassimp-6.dll"
+    INTERFACE_INCLUDE_DIRECTORIES "${NOVA3D_THIRD_PARTY_INCLUDE_DIR}"
+)
+
+target_include_directories(nova3d
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(nova3d
+    PUBLIC
+        Nova3D::SDL2
+        Nova3D::GLFW
+        Nova3D::Assimp
+)
 
 if(ANDROID)
     find_library(log-lib log)
@@ -65,6 +95,20 @@ else()
     target_link_libraries(nova3d PUBLIC OpenGL::GL)
     target_compile_definitions(nova3d PUBLIC NOVA3D_PLATFORM_DESKTOP=1)
 endif()
+
+function(nova3d_copy_runtime_dlls target_name)
+    if(WIN32)
+        add_custom_command(TARGET ${target_name} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${NOVA3D_BIN_DIR}/SDL2.dll"
+                "$<TARGET_FILE_DIR:${target_name}>/SDL2.dll"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${NOVA3D_BIN_DIR}/libassimp-6.dll"
+                "$<TARGET_FILE_DIR:${target_name}>/libassimp-6.dll"
+            VERBATIM
+        )
+    endif()
+endfunction()
 
 if(NOVA3D_BUILD_SANDBOX)
     add_subdirectory(apps/Sandbox)
