@@ -112,3 +112,18 @@ cmake --build build --target nova_asset_validator
 ```
 
 Format policy matrix: `docs/import_format_matrix.md`.
+
+## GUI Advanced Usage
+
+- Create/assign skin:
+  - `auto skin = std::make_shared<nova3d::gui::NGUISkin>();`
+  - `nova3d::gui::GUIThemeManager themeMgr(skin);`
+  - `themeMgr.setDarkTheme();`, `themeMgr.setLightTheme();`, `themeMgr.setCustomAccent({r,g,b,a});`
+- Register widgets in `NGUIElementFactory` and load JSON layout:
+  - `NGUILayoutLoader::loadLayoutJson("assets/gui/sandbox_layout.json", ctx, factory, skin);`
+- Show dialogs via unified API:
+  - `NFileDialog::open/save/selectFolder`
+  - `NColorDialog::pick`
+  - `NMessageBox::show`
+- Use mesh viewer widget:
+  - `NMeshViewerWidget` supports wheel zoom, mouse drag orbit, `R` reset, `W` wireframe toggle.

@@ -68,11 +68,18 @@ public:
         m_skin = std::make_shared<nova3d::gui::NGUISkin>();
         m_guiManager->setSkin(m_skin);
         m_runtimeUi = nova3d::editor::RuntimeUIFoundation::build(m_guiManager->context());
+        m_factory.registerType("window", [](){ return std::make_shared<nova3d::gui::Window>(); });
+        m_factory.registerType("panel", [](){ return std::make_shared<nova3d::gui::Panel>(); });
+        m_factory.registerType("button", [](){ return std::make_shared<nova3d::gui::Button>(); });
+        m_factory.registerType("label", [](){ return std::make_shared<nova3d::gui::Label>(); });
+        m_factory.registerType("meshviewer", [](){ return std::make_shared<nova3d::gui::NMeshViewerWidget>(); });
         nova3d::gui::NGUILoader::loadLayoutJson("assets/gui/sandbox_layout.json", m_guiManager->context(), m_factory, m_skin);
         auto file = nova3d::gui::NFileDialog::open("Select mesh","*.obj;*.fbx", false);
         auto color = nova3d::gui::NColorDialog::pick({0.7F,0.8F,1.0F,1.0F});
         auto msg = nova3d::gui::NMessageBox::show("Nova3D","GUI production baseline loaded", nova3d::gui::NMessageBox::Type::Info, nova3d::gui::NMessageBox::Buttons::Ok);
         auto btn = std::make_shared<nova3d::gui::Button>(); btn->text = "Play/Pause"; btn->rect={30,330,140,30}; btn->onClick=[this](){m_playback=!m_playback;}; m_runtimeUi.assetBrowser->addChild(btn);
+        bindGuiActions();
+        runGuiLayoutEditorBootstrap();
 
         m_scheduler.start(2);
         m_events.subscribe("resource.loaded", [this](const nova3d::runtime::EngineEvent&){ m_runtimeStats.frame.tasksExecuted++; });
@@ -84,7 +91,7 @@ public:
     void onUpdate(float dt) override {
         nova3d::runtime::ProfileScope profileScope(m_profiler, "sandbox.update");
         if (m_playback) m_animController.update(dt); m_debug.newFrame(dt); m_guiManager->tick();
-        m_themeTimer += dt; if(m_themeTimer>3.0F){ m_themeTimer=0.0F; m_dark=!m_dark; m_skin->setTheme(m_dark?nova3d::gui::NGUITheme::dark():nova3d::gui::NGUITheme::light()); }
+        m_themeTimer += dt; if(m_themeTimer>3.0F){ m_themeTimer=0.0F; m_dark=!m_dark; nova3d::gui::GUIThemeManager tm(m_skin); if(m_dark) tm.setDarkTheme(); else tm.setLightTheme(); }
         m_events.pump(m_eventQueue);
         m_angle += dt;
         m_meshNode->transform().rotation = nova3d::math::Quaternion::fromAxisAngle({0,1,0}, m_angle);
@@ -104,6 +111,24 @@ public:
     }
     void onShutdown() override { m_audio.stop(m_voice); m_audio.shutdown(); }
 private:
+    void visitGui(const std::shared_ptr<nova3d::gui::GUIElement>& e, const std::function<void(const std::shared_ptr<nova3d::gui::GUIElement>&)>& fn){ fn(e); for(const auto& c : e->children()) visitGui(c, fn); }
+    void bindGuiActions(){
+        for (const auto& r : m_guiManager->context().roots()){
+            visitGui(r, [this](const std::shared_ptr<nova3d::gui::GUIElement>& e){
+                auto w = std::dynamic_pointer_cast<nova3d::gui::GUIWidget>(e);
+                if(!w || e->onClickAction.empty()) return;
+                if(e->onClickAction=="action.load_model") w->onClick=[this](){ auto f=nova3d::gui::NFileDialog::open("Load mesh","*.obj;*.fbx",false); if(f.accepted && !f.selectedPaths.empty()) m_selectedModel=f.selectedPaths.front(); };
+                else if(e->onClickAction=="action.pick_color") w->onClick=[this](){ auto c=nova3d::gui::NColorDialog::pick({0.3F,0.6F,0.9F,1}); nova3d::gui::GUIThemeManager(m_skin).setCustomAccent(c.selectedColor); };
+                else if(e->onClickAction=="action.message") w->onClick=[](){ (void)nova3d::gui::NMessageBox::show("GUI","Action binding executed", nova3d::gui::NMessageBox::Type::Info, nova3d::gui::NMessageBox::Buttons::Ok); };
+                else if(e->onClickAction=="action.toggle_theme") w->onClick=[this](){ nova3d::gui::GUIThemeManager(m_skin).toggleLightDark(); };
+            });
+        }
+    }
+    void runGuiLayoutEditorBootstrap(){
+        auto selected = m_guiManager->context().findById("load_model");
+        if(selected){ selected->rect.x += 2.0F; selected->rect.y += 2.0F; }
+        (void)nova3d::gui::NGUILayoutSerializer::saveLayoutJson("assets/gui/sandbox_layout.autosave.json", m_guiManager->context());
+    }
     class NullGUIRenderer final : public nova3d::gui::GUIRenderer { public: void beginFrame() override {} void drawQuad(const nova3d::gui::Rect&, const nova3d::math::Vector4&, int) override {} void drawText(const nova3d::gui::Rect&, const std::string&, const nova3d::math::Vector4&, int) override {} void endFrame() override {} };
     float m_angle = 0.0F;
     float m_toggleTimer = 0.0F; bool m_useOrbit=false;
@@ -135,6 +160,7 @@ private:
     nova3d::gui::NGUIElementFactory m_factory;
     float m_themeTimer = 0.0F;
     bool m_dark = true;
+    std::string m_selectedModel = "assets/models/cube.obj";
     nova3d::editor::RuntimeUIFoundation m_runtimeUi;
 };
 int main(){ SandboxApp app; nova3d::core::NovaDevice engine; if(!engine.initialize(app)) return 1; engine.run(); return 0; }
