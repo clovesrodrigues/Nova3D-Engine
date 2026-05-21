@@ -13,6 +13,9 @@ namespace nova3d::graphics { class ForwardRenderer; }
 namespace nova3d::assets { struct ModelAsset; }
 namespace nova3d::scene {
 
+class ISceneNode;
+class SceneManager;
+
 enum class NPivotMode { MeshCenter, BottomCenter, TopCenter, Custom };
 
 struct NPlacementOptions {
@@ -67,7 +70,6 @@ private:
     NTransformSpace m_space = NTransformSpace::Local;
 };
 
-class SceneManager;
 struct Triangle { math::Vector3 a{},b{},c{}; };
 struct SceneRayHit { bool hit=false; std::shared_ptr<ISceneNode> node; std::size_t nodeId=0; float distance=0; math::Vector3 position{}; math::Vector3 normal{}; std::size_t triangleId=0; std::size_t trianglesTested=0; double queryTimeMs=0.0; };
 class ITriangleSelector { public: virtual ~ITriangleSelector()=default; virtual std::vector<Triangle> collectTriangles(const math::AABB& region) const =0; virtual std::vector<Triangle> collectTriangles(const math::Ray& ray, float maxDistance) const =0; virtual std::vector<Triangle> collectTriangles(const math::Frustum& frustum) const =0; };
