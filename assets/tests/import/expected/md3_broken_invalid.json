@@ -1,0 +1,10 @@
+{
+  "caseName":"md3_broken_invalid",
+  "format":"MD3",
+  "asset":"invalid/broken.md3",
+  "expectedSuccess":false,
+  "expectedMeshCountExact":0,
+  "expectedMaterialCountExact":0,
+  "expectedAnimationCountExact":0,
+  "expectSkeleton":false
+}

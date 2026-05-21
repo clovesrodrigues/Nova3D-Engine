@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 project(Nova3D VERSION 0.1.0 LANGUAGES CXX)
 
+include(CTest)
+enable_testing()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -131,3 +134,13 @@ if(NOVA3D_BUILD_SANDBOX)
 endif()
 
 add_subdirectory(apps/AssetValidator)
+
+
+add_test(NAME import_regression_obj COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import OBJ)
+add_test(NAME import_regression_assimp COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import MD5)
+add_test(NAME import_regression_invalid COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import invalid)
+
+add_custom_target(check_import_regression
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -R import_regression_
+    DEPENDS nova_import_regression
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

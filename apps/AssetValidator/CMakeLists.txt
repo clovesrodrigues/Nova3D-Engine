@@ -1,2 +1,4 @@
-add_executable(nova_asset_validator main.cpp)
-target_link_libraries(nova_asset_validator PRIVATE nova3d)
+add_executable(nova_import_regression main.cpp)
+target_link_libraries(nova_import_regression PRIVATE nova3d)
+
+add_executable(nova_asset_validator ALIAS nova_import_regression)

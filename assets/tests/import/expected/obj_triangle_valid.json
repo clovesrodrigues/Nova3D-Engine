@@ -1,0 +1,13 @@
+{
+  "caseName":"obj_triangle_valid",
+  "format":"OBJ",
+  "asset":"valid/triangle.obj",
+  "expectedSuccess":true,
+  "expectedNodeCountMin":1,
+  "expectedMeshCountMin":1,
+  "expectedMaterialCountMin":1,
+  "expectedAnimationCountExact":0,
+  "expectSkeleton":false,
+  "expectedWarningsContains":["missing diffuse texture"],
+  "expectedFallbackFlags":["missingDiffuseFallback"]
+}
