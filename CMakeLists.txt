@@ -36,6 +36,8 @@ add_library(nova3d
     src/Graphics/RenderPipeline/ForwardRenderer.cpp
     src/Animation/Skeleton.cpp
     src/Animation/Animation.cpp
+    src/Audio/NAudio.cpp
+    src/Assets/Importers/NModelImporter.cpp
     src/Terrain/Terrain.cpp
     src/Spatial/SpatialPartition.cpp
     src/Serialization/Serialization.cpp
@@ -67,6 +69,12 @@ set_target_properties(Nova3D::GLFW PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${NOVA3D_THIRD_PARTY_INCLUDE_DIR}/GLFW"
 )
 
+add_library(Nova3D::SoLoud STATIC IMPORTED GLOBAL)
+set_target_properties(Nova3D::SoLoud PROPERTIES
+    IMPORTED_LOCATION "${NOVA3D_LIB_DIR}/libsoloud.a"
+    INTERFACE_INCLUDE_DIRECTORIES "${NOVA3D_THIRD_PARTY_INCLUDE_DIR}"
+)
+
 add_library(Nova3D::Assimp SHARED IMPORTED GLOBAL)
 set_target_properties(Nova3D::Assimp PROPERTIES
     IMPORTED_IMPLIB "${NOVA3D_LIB_DIR}/libassimp.dll.a"
@@ -84,6 +92,7 @@ target_link_libraries(nova3d
         Nova3D::SDL2
         Nova3D::GLFW
         Nova3D::Assimp
+        Nova3D::SoLoud
 )
 
 if(ANDROID)
