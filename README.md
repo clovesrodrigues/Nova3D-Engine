@@ -127,3 +127,15 @@ Format policy matrix: `docs/import_format_matrix.md`.
   - `NMessageBox::show`
 - Use mesh viewer widget:
   - `NMeshViewerWidget` supports wheel zoom, mouse drag orbit, `R` reset, `W` wireframe toggle.
+
+
+## Sandbox Scene Demo Controls (Fase 4)
+- Camera mode toggles between FPS and Orbit in the runtime demo sequence.
+- FPS controls are fed via animator input channels (`setMoveInput`, `setLookInput`) and collision response is active.
+- Orbit controls use target orbit + dolly.
+- Picking runs from screen center each frame and logs hit distance/triangle metrics.
+- Scene includes collidable mesh nodes and an active billboard node foundation.
+
+Format support notes:
+- **Official**: 3DS, B3D, IRR/IRRMESH, LWO/LWS, MD2, X.
+- **Experimental**: Blender native `.blend` (use FBX/OBJ/GLTF intermediary in current pipeline).
