@@ -44,6 +44,14 @@ public:
 
         m_meshNode = m_scene->createMeshNode(nova3d::scene::createSimpleTriangleMesh());
         auto staticNode=m_scene->createMeshNode(nova3d::scene::createSimpleTriangleMesh()); staticNode->transform().position={2.0F,0,0}; staticNode->transform().markDirty();
+        auto selA=std::make_shared<nova3d::scene::NMeshTriangleSelector>(m_meshNode);
+        auto selB=std::make_shared<nova3d::scene::NMeshTriangleSelector>(staticNode);
+        m_scene->metaTriangleSelector()->addSelector(selA); m_scene->metaTriangleSelector()->addSelector(selB);
+        m_fpsAnimator=std::make_shared<nova3d::scene::NAnimatorCameraFPS>(); m_orbitAnimator=std::make_shared<nova3d::scene::NAnimatorCameraOrbit>();
+        m_orbitAnimator->setEnabled(false);
+        m_scene->animatorController().attach(m_camera,m_fpsAnimator); m_scene->animatorController().attach(m_camera,m_orbitAnimator);
+        m_collisionAnimator=std::make_shared<nova3d::scene::NAnimatorCollisionResponse>(m_scene->collisionManager());
+        m_scene->animatorController().attach(m_camera,m_collisionAnimator);
         m_scene->createLightNode(std::make_shared<nova3d::scene::DirectionalLight>());
 
         nova3d::reflection::TypeRegistry::instance().registerType({"MeshSceneNode","SceneNode",{{"visible","bool",{true,0,0,"Rendering",true,true}}},{}});
@@ -81,10 +89,15 @@ public:
         m_angle += dt;
         m_meshNode->transform().rotation = nova3d::math::Quaternion::fromAxisAngle({0,1,0}, m_angle);
         m_meshNode->transform().markDirty();
-        m_camera->transform().position = {std::sin(m_angle)*4.0F,2.0F,std::cos(m_angle)*4.0F}; m_camera->transform().markDirty(); m_camera->lookAt({0,0,0});
+        if(m_toggleTimer>3.0F){ m_toggleTimer=0.0F; m_useOrbit=!m_useOrbit; m_fpsAnimator->setEnabled(!m_useOrbit); m_orbitAnimator->setEnabled(m_useOrbit);}
+        m_toggleTimer += dt;
+        m_fpsAnimator->setMoveInput(1.0F,0.0F,0.0F); m_fpsAnimator->setLookInput(15.0F,0.0F);
+        m_orbitAnimator->setOrbitInput(20.0F,5.0F); m_orbitAnimator->setDollyInput(std::sin(m_angle));
         m_scene->update(dt);
         m_debug.drawFrustum(m_camera->frustum(),{1,1,0,1},0.0F);
         m_debug.drawBox(m_meshNode->worldBounds(),{0,1,1,1},0.0F);
+        auto pick=m_scene->collisionManager()->screenPick(0.5F,0.5F);
+        if(pick.hit){ nova3d::core::Logger::info("[Picking] hit dist="+std::to_string(pick.distance)+" tris="+std::to_string(pick.trianglesTested)+" ms="+std::to_string(pick.queryTimeMs)); }
         m_renderer->render(*m_scene);
         m_runtimeStats.frame.frameTimeMs = dt*1000.0F;
         m_runtimeStats.frame.fps = dt > 0 ? 1.0F/dt : 0.0F;
@@ -93,6 +106,7 @@ public:
 private:
     class NullGUIRenderer final : public nova3d::gui::GUIRenderer { public: void beginFrame() override {} void drawQuad(const nova3d::gui::Rect&, const nova3d::math::Vector4&, int) override {} void drawText(const nova3d::gui::Rect&, const std::string&, const nova3d::math::Vector4&, int) override {} void endFrame() override {} };
     float m_angle = 0.0F;
+    float m_toggleTimer = 0.0F; bool m_useOrbit=false;
     std::string m_savedSceneJson;
     nova3d::scene::PrefabInstance m_prefabInstance;
     nova3d::core::ObjectRegistry m_registry;
@@ -103,6 +117,7 @@ private:
     std::shared_ptr<nova3d::scene::CameraSceneNode> m_camera;
     std::shared_ptr<nova3d::scene::MeshSceneNode> m_meshNode;
     nova3d::animation::AnimationController m_animController;
+    std::shared_ptr<nova3d::scene::NAnimatorCameraFPS> m_fpsAnimator; std::shared_ptr<nova3d::scene::NAnimatorCameraOrbit> m_orbitAnimator; std::shared_ptr<nova3d::scene::NAnimatorCollisionResponse> m_collisionAnimator;
     bool m_playback = true;
     nova::audio::NAudioDevice m_audio;
     nova::audio::NAudioClip m_clip;
