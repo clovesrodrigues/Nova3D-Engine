@@ -4,6 +4,9 @@
 
 #include <limits>
 
+#include <algorithm>
+#include <chrono>
+
 namespace {
 using namespace nova3d;
 
@@ -112,7 +115,6 @@ bool SceneManager::spawnModel(const nova::asset::NModelData& modelData, const NP
     return true;
 }
 
-void SceneManager::update(float dt){ m_root->updateWorldRecursive(math::Matrix4::identity()); std::vector<std::shared_ptr<ISceneNode>> stack{m_root}; while(!stack.empty()){ auto n=stack.back(); stack.pop_back(); n->onUpdate(dt); for(auto& c:n->children()) stack.push_back(c);} }
 void SceneManager::registerVisible(const std::shared_ptr<IMeshBuffer>& buffer,const math::Matrix4& world, RenderMobility mobility, std::size_t subMeshIndex){ RenderItem item{buffer,world,subMeshIndex,mobility}; if (auto m=buffer->material(); m && m->isTransparent()) { if(mobility==RenderMobility::Static) m_staticTransparentQueue.push_back(item); else m_dynamicTransparentQueue.push_back(item);} else { if(mobility==RenderMobility::Static) m_staticOpaqueQueue.push_back(item); else m_dynamicOpaqueQueue.push_back(item);} }
 void SceneManager::registerDirectional(const DirectionalLight& light){ m_lighting.directionalLights.push_back(light);} void SceneManager::registerPoint(const PointLight& light,const math::Vector3&){ m_lighting.pointLights.push_back(light); }
 void SceneManager::rebuildSpatial(){ if(!m_staticPartition) m_staticPartition=std::make_unique<spatial::OctreePartition>(math::AABB{{-2048,-2048,-2048},{2048,2048,2048}}); if(!m_dynamicPartition) m_dynamicPartition=std::make_unique<spatial::BVHPartition>(); m_staticPartition=std::make_unique<spatial::OctreePartition>(math::AABB{{-2048,-2048,-2048},{2048,2048,2048}}); m_dynamicPartition=std::make_unique<spatial::BVHPartition>(); std::vector<std::shared_ptr<ISceneNode>> stack{m_root}; while(!stack.empty()){ auto n=stack.back(); stack.pop_back(); if(n.get()!=m_root.get()){ spatial::SpatialNode sn{m_spatialId++,n->worldBounds(),n.get(),true}; m_dynamicPartition->insert(sn);} for(auto& c:n->children()) stack.push_back(c);} }
@@ -130,4 +132,30 @@ void NTransformGizmo::scaleBy(const math::Vector3& factor){ if(!m_node) return; 
 
 namespace nova3d::scene {
 std::shared_ptr<IMesh> createMeshFromModelAsset(const assets::ModelAsset& model){ auto mb=std::make_shared<MeshBuffer>(); for(auto &v:model.mesh.vertices) mb->v.push_back({v.position,v.normal,v.uv,v.color}); mb->i=model.mesh.indices; mb->box=model.mesh.bounds; auto m=std::make_shared<Mesh>(); m->bufs.push_back(mb); m->box=model.mesh.bounds; return m; }
+}
+namespace nova3d::scene {
+SceneManager::SceneManager(graphics::IVideoDriver& driver):m_driver(driver){ m_metaSelector=std::make_shared<NMetaTriangleSelector>(); }
+void SceneManager::setActiveCamera(const std::shared_ptr<CameraSceneNode>& camera){ m_camera=camera; m_collisionManager=std::make_shared<NSceneCollisionManager>(m_camera,m_metaSelector); }
+void NSceneNodeAnimatorController::attach(const std::shared_ptr<ISceneNode>& node, const std::shared_ptr<ISceneNodeAnimator>& animator){ m_bindings.emplace_back(node,animator);} 
+void NSceneNodeAnimatorController::detach(const std::shared_ptr<ISceneNode>& node, const std::shared_ptr<ISceneNodeAnimator>& animator){ m_bindings.erase(std::remove_if(m_bindings.begin(),m_bindings.end(),[&](auto& b){return b.first.lock()==node&&b.second==animator;}),m_bindings.end()); }
+std::vector<std::shared_ptr<ISceneNodeAnimator>> NSceneNodeAnimatorController::list(const std::shared_ptr<ISceneNode>& node) const { std::vector<std::shared_ptr<ISceneNodeAnimator>> out; for(auto& b:m_bindings) if(b.first.lock()==node) out.push_back(b.second); return out; }
+void NSceneNodeAnimatorController::update(float dt) const { auto sorted=m_bindings; std::sort(sorted.begin(),sorted.end(),[](auto& a, auto& b){ return a.second->priority()<b.second->priority();}); for(auto& b:sorted){ auto n=b.first.lock(); if(n && b.second && b.second->enabled()) b.second->animateNode(*n,dt);} }
+void NAnimatorCameraFPS::animateNode(ISceneNode& node,float dt){ m_yaw += m_look.x*m_sensitivity*dt; m_pitch = std::clamp(m_pitch + m_look.y*m_sensitivity*dt,m_pitchMin,m_pitchMax); const float yaw=math::toRadians(m_yaw), pitch=math::toRadians(m_pitch); math::Vector3 f{std::cos(pitch)*std::sin(yaw), std::sin(pitch), -std::cos(pitch)*std::cos(yaw)}; auto r=f.cross({0,1,0}).normalized(); node.transform().position = node.transform().position + f*(m_move.x*m_speed*dt) + r*(m_move.y*m_speed*dt) + math::Vector3{0,1,0}*(m_move.z*m_speed*dt); node.transform().markDirty(); }
+void NAnimatorCameraOrbit::animateNode(ISceneNode& node,float dt){ m_yaw+=m_orbit.x*dt; m_pitch=std::clamp(m_pitch+m_orbit.y*dt,-89.0F,89.0F); m_radius=std::max(0.5F,m_radius-m_dolly*dt); m_target=m_target+math::Vector3{m_pan.x*dt,m_pan.y*dt,0}; const float yr=math::toRadians(m_yaw), pr=math::toRadians(m_pitch); node.transform().position={m_target.x+std::cos(pr)*std::sin(yr)*m_radius,m_target.y+std::sin(pr)*m_radius,m_target.z-std::cos(pr)*std::cos(yr)*m_radius}; node.transform().markDirty(); if(auto* c=dynamic_cast<CameraSceneNode*>(&node)) c->lookAt(m_target); }
+void NAnimatorCollisionResponse::animateNode(ISceneNode& node,float dt){ if(!m_collision) return; m_verticalVelocity-=m_gravity*dt; auto p=node.transform().position; p.y += m_verticalVelocity*dt; auto hit=m_collision->queryGround(p,100.0F); if(hit.hit && (p.y-hit.position.y)<m_stepOffset){ p.y=hit.position.y+m_stepOffset; m_verticalVelocity=0; } node.transform().position=p; node.transform().markDirty(); }
+std::vector<Triangle> NMeshTriangleSelector::collectTriangles(const math::AABB&) const { std::vector<Triangle> out; if(!m_node||!m_node->mesh()) return out; auto m=m_node->mesh(); for(size_t bi=0;bi<m->meshBufferCount();++bi){ auto b=m->meshBuffer(bi); auto& v=b->vertices(); auto& idx=b->indices(); for(size_t i=0;i+2<idx.size();i+=3) out.push_back({v[idx[i]].position,v[idx[i+1]].position,v[idx[i+2]].position}); } return out; }
+std::vector<Triangle> NMeshTriangleSelector::collectTriangles(const math::Ray&, float) const { return collectTriangles(math::AABB{}); }
+std::vector<Triangle> NMeshTriangleSelector::collectTriangles(const math::Frustum&) const { return collectTriangles(math::AABB{}); }
+void NMetaTriangleSelector::addSelector(const std::shared_ptr<ITriangleSelector>& selector){ m_selectors.push_back(selector);} 
+void NMetaTriangleSelector::removeSelector(const std::shared_ptr<ITriangleSelector>& selector){ m_selectors.erase(std::remove(m_selectors.begin(),m_selectors.end(),selector),m_selectors.end()); }
+std::vector<Triangle> NMetaTriangleSelector::collectTriangles(const math::AABB& region) const { std::vector<Triangle> o; for(auto&s:m_selectors){auto t=s->collectTriangles(region);o.insert(o.end(),t.begin(),t.end());} return o; }
+std::vector<Triangle> NMetaTriangleSelector::collectTriangles(const math::Ray& ray, float maxDistance) const { std::vector<Triangle> o; for(auto&s:m_selectors){auto t=s->collectTriangles(ray,maxDistance);o.insert(o.end(),t.begin(),t.end());} return o; }
+std::vector<Triangle> NMetaTriangleSelector::collectTriangles(const math::Frustum& frustum) const { std::vector<Triangle> o; for(auto&s:m_selectors){auto t=s->collectTriangles(frustum);o.insert(o.end(),t.begin(),t.end());} return o; }
+static bool rayTriangle(const math::Ray& ray,const Triangle& t,float& dist,math::Vector3& n){ const float eps=1e-6F; auto e1=t.b-t.a,e2=t.c-t.a; auto p=ray.direction.cross(e2); float det=e1.dot(p); if(std::abs(det)<eps) return false; float inv=1.0F/det; auto tv=ray.origin-t.a; float u=tv.dot(p)*inv; if(u<0||u>1) return false; auto q=tv.cross(e1); float v=ray.direction.dot(q)*inv; if(v<0||u+v>1) return false; dist=e2.dot(q)*inv; if(dist<0) return false; n=e1.cross(e2).normalized(); return true; }
+SceneRayHit NSceneCollisionManager::rayPick(const math::Ray& ray,float maxDistance) const { SceneRayHit out{}; if(!m_selector) return out; auto t0=std::chrono::high_resolution_clock::now(); auto tris=m_selector->collectTriangles(ray,maxDistance); out.trianglesTested=tris.size(); float best=maxDistance; for(size_t i=0;i<tris.size();++i){ float d; math::Vector3 n; if(rayTriangle(ray,tris[i],d,n)&&d<best){ best=d; out={true,nullptr,0,d,ray.origin+ray.direction*d,n,i,tris.size(),0.0}; } } out.queryTimeMs=std::chrono::duration<double,std::milli>(std::chrono::high_resolution_clock::now()-t0).count(); return out; }
+SceneRayHit NSceneCollisionManager::screenPick(float x,float y) const { if(!m_camera) return {}; float nx=(2*x)-1.0F; float ny=1.0F-(2*y); math::Ray ray{m_camera->transform().position,{nx*0.6F,ny*0.6F,-1}.normalized()}; return rayPick(ray,1000.0F); }
+bool NSceneCollisionManager::intersectsAABB(const math::AABB& a,const math::AABB& b) const { return (a.min.x<=b.max.x&&a.max.x>=b.min.x)&&(a.min.y<=b.max.y&&a.max.y>=b.min.y)&&(a.min.z<=b.max.z&&a.max.z>=b.min.z); }
+bool NSceneCollisionManager::intersectsSphere(const math::Sphere& a,const math::Sphere& b) const { return (a.center-b.center).length() <= (a.radius+b.radius); }
+SceneRayHit NSceneCollisionManager::queryGround(const math::Vector3& p,float maxDistance) const { return rayPick(math::Ray{p,{0,-1,0}},maxDistance); }
+void SceneManager::update(float dt){ m_animatorController.update(dt); m_root->updateWorldRecursive(math::Matrix4::identity()); std::vector<std::shared_ptr<ISceneNode>> stack{m_root}; while(!stack.empty()){ auto n=stack.back(); stack.pop_back(); n->onUpdate(dt); for(auto& c:n->children()) stack.push_back(c);} }
 }
