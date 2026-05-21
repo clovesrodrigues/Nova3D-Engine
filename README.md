@@ -80,6 +80,16 @@ make build
 make run
 ```
 
+
+## Build & SDK Targets
+
+Documentação operacional oficial:
+
+- Matriz de build e compatibilidade: `docs/build_matrix.md`
+- Empacotamento Android separado: `docs/android_packaging.md`
+- Política de suporte por formato: `docs/format_support_policy.md`
+- Checklist de release estável de SDK: `docs/sdk_release_checklist.md`
+
 ## Princípios de design
 
 - `#if defined(ANDROID)` **somente** na camada de plataforma.
