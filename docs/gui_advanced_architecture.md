@@ -15,3 +15,11 @@ Integration path:
 Notes:
 - Public GUI headers keep backend-agnostic API.
 - Native dialog adapters can be added internally later without changing public API.
+
+## Layout Editor Bootstrap (Sandbox)
+
+The Sandbox now includes a lightweight layout-editor bootstrap path:
+- Traverses widget tree and binds action ids (`onClick`) to runtime command callbacks.
+- Applies a small editable transform to a selected widget and writes autosave layout to `assets/gui/sandbox_layout.autosave.json` using `NGUILayoutSerializer`.
+
+This is the first step toward a full WYSIWYG editor loop.
