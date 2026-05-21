@@ -45,6 +45,7 @@ add_library(nova3d
     src/Serialization/JsonSerialization.cpp
     src/Scene/SceneSerialization.cpp
     src/Scene/Prefab.cpp
+    src/Scene/NMeshManagement.cpp
     src/Reflection/Reflection.cpp
     src/Core/ObjectRegistry.cpp
     src/Debug/DebugRenderer.cpp
