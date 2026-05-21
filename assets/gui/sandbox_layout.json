@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "widgets": [
+    {"type":"Button","id":"load_model","text":"Load Model","rect":{"x":24,"y":24,"w":160,"h":30},"visible":true,"enabled":true,"styleClass":"primary"},
+    {"type":"Button","id":"toggle_wire","text":"Wireframe","rect":{"x":24,"y":60,"w":160,"h":30},"visible":true,"enabled":true,"styleClass":"secondary"}
+  ]
+}

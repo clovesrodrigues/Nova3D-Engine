@@ -57,7 +57,13 @@ public:
 
         if (m_audio.initialize() && m_clip.loadFromFile("assets/audio/test.wav")) { m_voice = m_audio.play(m_clip, 0.6F, true); }
         m_guiManager = std::make_unique<nova3d::gui::GUIManager>(std::make_shared<NullGUIRenderer>());
+        m_skin = std::make_shared<nova3d::gui::NGUISkin>();
+        m_guiManager->setSkin(m_skin);
         m_runtimeUi = nova3d::editor::RuntimeUIFoundation::build(m_guiManager->context());
+        nova3d::gui::NGUILoader::loadLayoutJson("assets/gui/sandbox_layout.json", m_guiManager->context(), m_factory, m_skin);
+        auto file = nova3d::gui::NFileDialog::open("Select mesh","*.obj;*.fbx", false);
+        auto color = nova3d::gui::NColorDialog::pick({0.7F,0.8F,1.0F,1.0F});
+        auto msg = nova3d::gui::NMessageBox::show("Nova3D","GUI production baseline loaded", nova3d::gui::NMessageBox::Type::Info, nova3d::gui::NMessageBox::Buttons::Ok);
         auto btn = std::make_shared<nova3d::gui::Button>(); btn->text = "Play/Pause"; btn->rect={30,330,140,30}; btn->onClick=[this](){m_playback=!m_playback;}; m_runtimeUi.assetBrowser->addChild(btn);
 
         m_scheduler.start(2);
@@ -70,6 +76,7 @@ public:
     void onUpdate(float dt) override {
         nova3d::runtime::ProfileScope profileScope(m_profiler, "sandbox.update");
         if (m_playback) m_animController.update(dt); m_debug.newFrame(dt); m_guiManager->tick();
+        m_themeTimer += dt; if(m_themeTimer>3.0F){ m_themeTimer=0.0F; m_dark=!m_dark; m_skin->setTheme(m_dark?nova3d::gui::NGUITheme::dark():nova3d::gui::NGUITheme::light()); }
         m_events.pump(m_eventQueue);
         m_angle += dt;
         m_meshNode->transform().rotation = nova3d::math::Quaternion::fromAxisAngle({0,1,0}, m_angle);
@@ -109,6 +116,10 @@ private:
     nova3d::runtime::GPUUploadQueue m_uploads;
     nova3d::runtime::FrameStatistics m_runtimeStats;
     std::unique_ptr<nova3d::gui::GUIManager> m_guiManager;
+    std::shared_ptr<nova3d::gui::NGUISkin> m_skin;
+    nova3d::gui::NGUIElementFactory m_factory;
+    float m_themeTimer = 0.0F;
+    bool m_dark = true;
     nova3d::editor::RuntimeUIFoundation m_runtimeUi;
 };
 int main(){ SandboxApp app; nova3d::core::NovaDevice engine; if(!engine.initialize(app)) return 1; engine.run(); return 0; }
