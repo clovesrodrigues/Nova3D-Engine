@@ -82,6 +82,9 @@ public:
             if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &texPath) == AI_SUCCESS) outMat.albedoTexturePath = texPath.C_Str();
             if (mat->GetTexture(aiTextureType_NORMALS, 0, &texPath) == AI_SUCCESS) outMat.normalTexturePath = texPath.C_Str();
             if (mat->GetTexture(aiTextureType_UNKNOWN, 0, &texPath) == AI_SUCCESS) outMat.metallicRoughnessTexturePath = texPath.C_Str();
+            if (outMat.name.empty()) outMat.name = "material_" + std::to_string(i);
+            if (outMat.albedoTexturePath.empty()) result.report.warnings.emplace_back("Material '" + outMat.name + "' missing diffuse texture, using default color.");
+            if (outMat.normalTexturePath.empty()) result.report.warnings.emplace_back("Material '" + outMat.name + "' missing normal texture.");
             result.data.materials.push_back(std::move(outMat));
         }
 
@@ -148,9 +151,41 @@ public:
             const float tps = anim->mTicksPerSecond > 0.0 ? static_cast<float>(anim->mTicksPerSecond) : 25.0F;
             clip.setDuration(static_cast<float>(anim->mDuration) / tps);
             clip.setLooping(true);
+            nova3d::animation::AnimationTrack track{};
+            track.name = clip.name();
+            for (unsigned c = 0; c < anim->mNumChannels; ++c) {
+                const aiNodeAnim* channel = anim->mChannels[c];
+                nova3d::animation::AnimationChannel outChannel{};
+                outChannel.boneIndex = -1;
+                const auto channelName = std::string(channel->mNodeName.C_Str());
+                for (const auto& skeleton : result.data.skeletons) {
+                    const auto idx = skeleton.hierarchy().findBone(channelName);
+                    if (idx >= 0) { outChannel.boneIndex = idx; break; }
+                }
+                const auto keys = std::max({channel->mNumPositionKeys, channel->mNumRotationKeys, channel->mNumScalingKeys});
+                for (unsigned k = 0; k < keys; ++k) {
+                    nova3d::animation::Keyframe key{};
+                    const unsigned pk = std::min(k, channel->mNumPositionKeys ? channel->mNumPositionKeys - 1 : 0U);
+                    const unsigned rk = std::min(k, channel->mNumRotationKeys ? channel->mNumRotationKeys - 1 : 0U);
+                    const unsigned sk = std::min(k, channel->mNumScalingKeys ? channel->mNumScalingKeys - 1 : 0U);
+                    key.time = keys > 0 ? static_cast<float>((channel->mNumPositionKeys ? channel->mPositionKeys[pk].mTime : channel->mRotationKeys[rk].mTime) / tps) : 0.0F;
+                    if (channel->mNumPositionKeys) { const auto& p = channel->mPositionKeys[pk].mValue; key.transform.translation = {p.x,p.y,p.z}; }
+                    if (channel->mNumRotationKeys) { const auto& q = channel->mRotationKeys[rk].mValue; key.transform.rotation = {q.x,q.y,q.z,q.w}; }
+                    if (channel->mNumScalingKeys) { const auto& sc = channel->mScalingKeys[sk].mValue; key.transform.scale = {sc.x,sc.y,sc.z}; }
+                    outChannel.keyframes.push_back(key);
+                }
+                if (outChannel.keyframes.empty()) result.report.warnings.emplace_back("Animation channel without keyframes: " + channelName);
+                if (outChannel.boneIndex < 0) result.report.warnings.emplace_back("Animation channel not mapped to skeleton bone: " + channelName);
+                track.channels.push_back(std::move(outChannel));
+            }
+            clip.tracks().push_back(std::move(track));
             result.data.animationClips.push_back(std::move(clip));
         }
 
+        if (result.data.materials.empty()) {
+            result.data.materials.push_back(NMaterial{"default_engine", "", "", ""});
+            result.report.warnings.emplace_back("Model missing materials; default engine material injected.");
+        }
         result.report.skeletonCount = static_cast<uint32_t>(result.data.skeletons.size());
         result.report.success = result.report.errors.empty();
         return result;
