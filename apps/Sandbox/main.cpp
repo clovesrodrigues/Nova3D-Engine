@@ -68,6 +68,11 @@ public:
         m_skin = std::make_shared<nova3d::gui::NGUISkin>();
         m_guiManager->setSkin(m_skin);
         m_runtimeUi = nova3d::editor::RuntimeUIFoundation::build(m_guiManager->context());
+        m_factory.registerType("window", [](){ return std::make_shared<nova3d::gui::Window>(); });
+        m_factory.registerType("panel", [](){ return std::make_shared<nova3d::gui::Panel>(); });
+        m_factory.registerType("button", [](){ return std::make_shared<nova3d::gui::Button>(); });
+        m_factory.registerType("label", [](){ return std::make_shared<nova3d::gui::Label>(); });
+        m_factory.registerType("meshviewer", [](){ return std::make_shared<nova3d::gui::NMeshViewerWidget>(); });
         nova3d::gui::NGUILoader::loadLayoutJson("assets/gui/sandbox_layout.json", m_guiManager->context(), m_factory, m_skin);
         auto file = nova3d::gui::NFileDialog::open("Select mesh","*.obj;*.fbx", false);
         auto color = nova3d::gui::NColorDialog::pick({0.7F,0.8F,1.0F,1.0F});
@@ -84,7 +89,7 @@ public:
     void onUpdate(float dt) override {
         nova3d::runtime::ProfileScope profileScope(m_profiler, "sandbox.update");
         if (m_playback) m_animController.update(dt); m_debug.newFrame(dt); m_guiManager->tick();
-        m_themeTimer += dt; if(m_themeTimer>3.0F){ m_themeTimer=0.0F; m_dark=!m_dark; m_skin->setTheme(m_dark?nova3d::gui::NGUITheme::dark():nova3d::gui::NGUITheme::light()); }
+        m_themeTimer += dt; if(m_themeTimer>3.0F){ m_themeTimer=0.0F; m_dark=!m_dark; nova3d::gui::GUIThemeManager tm(m_skin); if(m_dark) tm.setDarkTheme(); else tm.setLightTheme(); }
         m_events.pump(m_eventQueue);
         m_angle += dt;
         m_meshNode->transform().rotation = nova3d::math::Quaternion::fromAxisAngle({0,1,0}, m_angle);
