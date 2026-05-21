@@ -43,3 +43,9 @@ Cada caso imprime `PASS/FAIL` e diffs estruturados (ex.: `meshCount esperado>=1,
 - **Experimental**: formatos apenas com falha esperada ou sem cobertura de fallback/animação.
 
 Política recomendada: mover formato para Official somente com pelo menos 1 caso válido estruturado e 1 edgecase de fallback cobertos.
+
+
+## Casos adicionais implementados
+- `md5_animation_valid`: validação de animação (channels mínimos, keyframes por channel e duração > 0).
+- `obj_missing_uv_normals_edge`: edgecase para fallback de UV e normal ausentes + material default injetado.
+- `obj_missing_material_edge`: edgecase para fallback de material/textura difusa ausente.

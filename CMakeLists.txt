@@ -137,7 +137,9 @@ add_subdirectory(apps/AssetValidator)
 
 
 add_test(NAME import_regression_obj COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import OBJ)
-add_test(NAME import_regression_assimp COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import MD5)
+add_test(NAME import_regression_md5 COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import MD5)
+add_test(NAME import_regression_md5_animation COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import md5_animation)
+add_test(NAME import_regression_edgecases COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import edge)
 add_test(NAME import_regression_invalid COMMAND nova_import_regression ${CMAKE_CURRENT_SOURCE_DIR}/assets/tests/import invalid)
 
 add_custom_target(check_import_regression
