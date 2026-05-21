@@ -44,6 +44,24 @@ void CameraSceneNode::setPerspective(float fovDeg,float aspect,float nearPlane,f
 void CameraSceneNode::setOrthographic(float left,float right,float bottom,float top,float nearPlane,float farPlane){ m_proj=math::Matrix4::orthographic(left,right,bottom,top,nearPlane,farPlane);} 
 void CameraSceneNode::lookAt(const math::Vector3& target,const math::Vector3& up){ m_view=math::Matrix4::lookAt(transform().position,target,up);} 
 
+void CameraTargetSceneNode::onUpdate(float){
+    if(!m_followLinkedNode) return;
+    if(auto n=m_linkedNode.lock()){
+        transform().position = n->transform().position + m_offset;
+        transform().markDirty();
+    }
+}
+
+void CameraSceneNode::onUpdate(float){
+    if(auto t=m_targetNode.lock()){
+        if(m_lockCameraAndTarget){
+            t->transform().position = transform().position + m_lockOffset;
+            t->transform().markDirty();
+        }
+        lookAt(t->transform().position);
+    }
+}
+
 math::Vector3 computePivotOffset(const math::AABB& bounds, NPivotMode mode, const math::Vector3& customPivotOffset){
     const auto c=bounds.center();
     switch(mode){
@@ -65,6 +83,7 @@ math::AABB LightSceneNode::worldBounds() const { return {{-0.2F,-0.2F,-0.2F},{0.
 void TerrainSceneNode::onRegister(SceneManager&){}
 
 std::shared_ptr<CameraSceneNode> SceneManager::createCamera(){ auto c=std::make_shared<CameraSceneNode>(); m_root->addChild(c); return c; }
+std::shared_ptr<CameraTargetSceneNode> SceneManager::createCameraTargetNode(const math::Vector3& initialOffset){ auto n=std::make_shared<CameraTargetSceneNode>(initialOffset); m_root->addChild(n); return n; }
 std::shared_ptr<MeshSceneNode> SceneManager::createMeshNode(const std::shared_ptr<IMesh>& mesh){ auto n=std::make_shared<MeshSceneNode>(mesh); m_root->addChild(n); return n; }
 std::shared_ptr<CharacterSceneNode> SceneManager::createCharacterNode(float radius,float height){ auto n=std::make_shared<CharacterSceneNode>(radius,height); m_root->addChild(n); return n; }
 std::shared_ptr<BillboardSceneNode> SceneManager::createBillboardNode(const math::Vector2& size){ auto n=std::make_shared<BillboardSceneNode>(size); m_root->addChild(n); return n; }

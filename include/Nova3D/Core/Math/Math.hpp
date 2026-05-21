@@ -11,6 +11,7 @@ constexpr float kPi = 3.14159265358979323846F;
 inline float toRadians(float degrees) { return degrees * (kPi / 180.0F); }
 
 struct Vector2 { float x=0,y=0; };
+template <typename T> struct TVector3 { T x=0,y=0,z=0; };
 struct Vector3 { float x=0,y=0,z=0;
     Vector3 operator+(const Vector3& r) const { return {x+r.x,y+r.y,z+r.z}; }
     Vector3 operator-(const Vector3& r) const { return {x-r.x,y-r.y,z-r.z}; }
@@ -20,6 +21,9 @@ struct Vector3 { float x=0,y=0,z=0;
     float length() const { return std::sqrt(dot(*this)); }
     Vector3 normalized() const { float l=length(); return l>0?(*this)*(1.0F/l):Vector3{}; }
 };
+using Vector3f = TVector3<float>;
+using Vector3d = TVector3<double>;
+using Vector3i = TVector3<int>;
 struct Vector4 { float x=0,y=0,z=0,w=0; };
 
 struct Quaternion { float w=1,x=0,y=0,z=0;

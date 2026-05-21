@@ -47,3 +47,12 @@ Official (validated through importer pipeline):
 Experimental:
 - Blender native (`.blend`) is not loaded directly; use intermediate FBX/OBJ/GLTF.
 - Any format with partial material/animation parse support may load geometry but with reduced metadata fidelity.
+
+
+## Camera pivot model
+- `CameraSceneNode` now supports a linked `CameraTargetSceneNode` (second pivot).
+- Lock mode allows camera + target moving together as one logical object.
+- Target can be free, position-driven, or linked to another scene node (ex: character follow).
+
+## Collision manager API
+`ISceneCollisionManager` remains the public scene abstraction for ray picking, screen picking, overlap checks and ground queries.

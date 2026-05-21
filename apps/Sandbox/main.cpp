@@ -21,6 +21,11 @@ public:
         m_camera->setViewport({0,0,1280,720});
         m_camera->lookAt({0,0,0});
         m_scene->setActiveCamera(m_camera);
+        auto cameraTarget = m_scene->createCameraTargetNode({0.0F,0.0F,-1.0F});
+        cameraTarget->transform().position = {0,2,3};
+        cameraTarget->setFollowLinkedNode(false);
+        m_camera->setTargetNode(cameraTarget);
+        m_camera->setCameraTargetLocked(true);
                 nova3d::scene::NSpawnReport reportA{};
         nova3d::scene::NPlacementOptions base{};
         base.initialPosition = {0.0F, 0.0F, 0.0F};
