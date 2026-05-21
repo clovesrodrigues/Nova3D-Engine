@@ -1,10 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <Nova3D/Graphics/IRenderContext.hpp>
 
 namespace nova3d::core { class IApplication; }
 namespace nova3d::platform { class IPlatformServices; }
-namespace nova3d::graphics { class IRenderContext; class IVideoDriver; }
+namespace nova3d::graphics { class IVideoDriver; }
 
 namespace nova3d::core {
 
