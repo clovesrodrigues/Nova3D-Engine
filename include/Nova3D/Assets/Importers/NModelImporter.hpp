@@ -1,25 +1,76 @@
 #pragma once
 
+#include <Nova3D/Animation/AnimationClip.hpp>
+#include <Nova3D/Animation/Skeleton.hpp>
+#include <Nova3D/Scene/MeshData.hpp>
+
+#include <cstdint>
 #include <memory>
 #include <string>
-#include <Nova3D/Assets/Importers/MeshImporter.hpp>
+#include <vector>
 
 namespace nova::asset {
 
-class NAssimpImporterBackend {
-public:
-    virtual ~NAssimpImporterBackend() = default;
-    virtual std::shared_ptr<nova3d::assets::ModelAsset> importModel(const std::string& path) const = 0;
+struct NImportOptions {
+    bool triangulate = true;
+    bool generateNormals = true;
+    bool generateTangents = true;
+    bool flipUVs = false;
+    bool optimizeMeshes = true;
+    bool joinIdenticalVertices = true;
+    bool validateDataStructure = true;
+};
+
+struct NImportReport {
+    std::string sourcePath;
+    std::string detectedExtension;
+    bool usedAssimpFallback = false;
+    uint32_t nodeCount = 0;
+    uint32_t meshCount = 0;
+    uint32_t materialCount = 0;
+    uint32_t animationCount = 0;
+    uint32_t skeletonCount = 0;
+    std::vector<std::string> warnings;
+    std::vector<std::string> errors;
+    bool success = false;
+};
+
+struct NMaterial {
+    std::string name;
+    std::string albedoTexturePath;
+    std::string normalTexturePath;
+    std::string metallicRoughnessTexturePath;
+};
+
+using NSubMesh = nova3d::scene::MeshSection;
+
+struct NMesh {
+    std::string name;
+    std::vector<nova3d::scene::MeshVertex> vertices;
+    std::vector<uint32_t> indices;
+    std::vector<NSubMesh> submeshes;
+    nova3d::math::AABB bounds{};
+};
+
+using NSkeleton = nova3d::animation::Skeleton;
+using NAnimationClip = nova3d::animation::AnimationClip;
+
+struct NModelData {
+    std::vector<NMesh> meshes;
+    std::vector<NMaterial> materials;
+    std::vector<NSkeleton> skeletons;
+    std::vector<NAnimationClip> animationClips;
+};
+
+struct NModelImportResult {
+    NModelData data;
+    NImportReport report;
 };
 
 class NModelImporter {
 public:
-    explicit NModelImporter(std::shared_ptr<NAssimpImporterBackend> backend);
-    std::shared_ptr<nova3d::assets::ModelAsset> importFromFile(const std::string& path) const;
-private:
-    std::shared_ptr<NAssimpImporterBackend> m_backend;
+    NModelImporter();
+    NModelImportResult importFromFile(const std::string& path, const NImportOptions& options = {}) const;
 };
-
-std::shared_ptr<NAssimpImporterBackend> createDefaultAssimpImporterBackend();
 
 } // namespace nova::asset
