@@ -1,8 +1,13 @@
 #pragma once
 
+#include <Nova3D/Animation/AnimationClip.hpp>
+#include <Nova3D/Animation/Skeleton.hpp>
+#include <Nova3D/Scene/MeshData.hpp>
+
+#include <cstdint>
 #include <memory>
 #include <string>
-#include <Nova3D/Assets/Importers/MeshImporter.hpp>
+#include <vector>
 
 namespace nova::asset {
 
@@ -27,7 +32,5 @@ public:
 private:
     std::shared_ptr<NAssimpImporterBackend> m_backend;
 };
-
-std::shared_ptr<NAssimpImporterBackend> createDefaultAssimpImporterBackend();
 
 } // namespace nova::asset

@@ -6,6 +6,13 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
+#include <algorithm>
+#include <filesystem>
+#include <cctype>
+#include <functional>
+#include <limits>
+#include <unordered_set>
+
 namespace {
 nova3d::math::AABB computeBounds(const std::vector<nova3d::scene::MeshVertex>& vertices) {
     nova3d::math::AABB b{{1e9F,1e9F,1e9F},{-1e9F,-1e9F,-1e9F}};
@@ -20,14 +27,34 @@ nova3d::math::AABB computeBounds(const std::vector<nova3d::scene::MeshVertex>& v
     return b;
 }
 
-class AssimpBackend final : public nova::asset::NAssimpImporterBackend {
+class NAssimpImporterBackend final {
 public:
     std::shared_ptr<nova3d::assets::ModelAsset> importModel(const std::string& path, nova::asset::NImportStats* outStats) const override {
         Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices);
-        if (!scene || !scene->HasMeshes()) {
-            nova3d::core::Logger::error(std::string("Assimp failed for ") + path + ": " + importer.GetErrorString());
-            return {};
+        unsigned flags = 0;
+        if (options.triangulate) flags |= aiProcess_Triangulate;
+        if (options.generateNormals) flags |= aiProcess_GenSmoothNormals;
+        if (options.generateTangents) flags |= aiProcess_CalcTangentSpace;
+        if (options.flipUVs) flags |= aiProcess_FlipUVs;
+        if (options.optimizeMeshes) flags |= aiProcess_OptimizeMeshes;
+        if (options.joinIdenticalVertices) flags |= aiProcess_JoinIdenticalVertices;
+        if (options.validateDataStructure) flags |= aiProcess_ValidateDataStructure;
+
+        const aiScene* scene = importer.ReadFile(path, flags);
+        if (!scene) {
+            result.report.errors.emplace_back(std::string("Assimp error: ") + importer.GetErrorString());
+            return result;
+        }
+
+        result.report.nodeCount = scene->mRootNode ? 1 : 0;
+        std::function<void(const aiNode*)> countNodes = [&](const aiNode* node) {
+            for (unsigned i = 0; i < node->mNumChildren; ++i) {
+                ++result.report.nodeCount;
+                countNodes(node->mChildren[i]);
+            }
+        };
+        if (scene->mRootNode) {
+            countNodes(scene->mRootNode);
         }
 
         if (outStats) {
@@ -72,7 +99,8 @@ public:
         return out;
     }
 };
-}
+
+} // namespace
 
 namespace nova::asset {
 NModelImporter::NModelImporter(std::shared_ptr<NAssimpImporterBackend> backend) : m_backend(std::move(backend)) {}
@@ -84,3 +112,5 @@ std::shared_ptr<nova3d::assets::ModelAsset> NModelImporter::importFromFile(const
 }
 std::shared_ptr<NAssimpImporterBackend> createDefaultAssimpImporterBackend() { return std::make_shared<AssimpBackend>(); }
 }
+
+} // namespace nova::asset

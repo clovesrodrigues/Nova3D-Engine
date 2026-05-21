@@ -72,3 +72,5 @@ endif()
 if(NOVA3D_BUILD_VALIDATION)
     add_executable(nova_asset_validator tools/nova_asset_validator.cpp)
 endif()
+
+add_subdirectory(apps/AssetValidator)
