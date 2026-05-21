@@ -1,0 +1,10 @@
+{
+  "caseName":"gltf_broken_invalid",
+  "format":"glTF",
+  "asset":"invalid/broken.gltf",
+  "expectedSuccess":false,
+  "expectedMeshCountExact":0,
+  "expectedMaterialCountExact":0,
+  "expectedAnimationCountExact":0,
+  "expectSkeleton":false
+}

@@ -1,0 +1,14 @@
+{
+  "caseName":"md5_minimal_valid",
+  "format":"MD5",
+  "asset":"valid/minimal.md5mesh",
+  "expectedSuccess":true,
+  "expectedNodeCountMin":1,
+  "expectedMeshCountMin":1,
+  "expectedMaterialCountMin":1,
+  "expectedAnimationCountExact":0,
+  "expectSkeleton":true,
+  "expectedBoneCountMin":1,
+  "expectedWarningsContains":["missing diffuse texture"],
+  "expectedFallbackFlags":["missingDiffuseFallback"]
+}

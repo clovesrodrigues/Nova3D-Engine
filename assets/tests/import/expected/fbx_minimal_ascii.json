@@ -1,0 +1,10 @@
+{
+  "caseName":"fbx_minimal_ascii",
+  "format":"FBX",
+  "asset":"valid/minimal_ascii.fbx",
+  "expectedSuccess":false,
+  "expectedMeshCountExact":0,
+  "expectedMaterialCountExact":0,
+  "expectedAnimationCountExact":0,
+  "expectSkeleton":false
+}
