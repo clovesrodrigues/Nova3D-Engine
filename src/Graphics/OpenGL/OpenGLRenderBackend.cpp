@@ -5,6 +5,8 @@
 #if defined(__ANDROID__)
 #include <GLES3/gl3.h>
 #else
+#define GLEW_NO_GLU
+#include <GL/glew.h>
 #include <SDL_opengl.h>
 #endif
 namespace nova3d::graphics {

@@ -1,6 +1,6 @@
 #include <Nova3D/Audio/NAudio.hpp>
-#include <soloud.h>
-#include <soloud_wav.h>
+#include <soloud/soloud.h>
+#include <soloud/soloud_wav.h>
 
 namespace nova::audio {
 struct NAudioClip::Impl { SoLoud::Wav wav; };

@@ -7,7 +7,7 @@
 
 namespace nova3d::platform {
 
-class SDLWindowDesktop final : public IWindow {
+class SDLWindowDesktop : public IWindow {
 public:
     bool create(const WindowDesc& desc) override;
     void destroy() override;
@@ -24,7 +24,7 @@ private:
 
 class SDLWindowAndroid final : public SDLWindowDesktop {};
 
-class SDLInputDesktop final : public IInput {
+class SDLInputDesktop : public IInput {
 public:
     void processEvent(const void* sdlEvent) override;
     void update() override;
