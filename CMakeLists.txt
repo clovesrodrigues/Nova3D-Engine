@@ -59,6 +59,8 @@ add_library(nova3d
     src/Runtime/RuntimeFoundation.cpp
     src/Runtime/EngineInfrastructure.cpp
     src/Memory/MemoryFoundation.cpp
+    src/NIEventReceiver.cpp
+    src/NInputManager.cpp
 )
 
 add_library(Nova3D::SDL2 SHARED IMPORTED GLOBAL)
