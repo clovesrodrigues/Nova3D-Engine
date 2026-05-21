@@ -1,0 +1,12 @@
+{
+  "caseName":"md5_animation_valid",
+  "format":"MD5",
+  "asset":"valid/minimal.md5anim",
+  "expectedSuccess":true,
+  "expectedNodeCountMin":1,
+  "expectedAnimationCountMin":1,
+  "expectSkeleton":false,
+  "expectedChannelCountMin":1,
+  "expectedKeyframesPerChannelMin":1,
+  "expectDurationPositive":true
+}

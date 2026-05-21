@@ -1,0 +1,10 @@
+{
+  "caseName":"md5_broken_invalid",
+  "format":"MD5",
+  "asset":"invalid/broken.md5mesh",
+  "expectedSuccess":false,
+  "expectedMeshCountExact":0,
+  "expectedMaterialCountExact":0,
+  "expectedAnimationCountExact":0,
+  "expectSkeleton":false
+}

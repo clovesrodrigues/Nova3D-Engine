@@ -1,0 +1,10 @@
+o MissingMaterial
+mtllib missing_materials.mtl
+usemtl does_not_exist
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+v 0.0 1.0 0.0
+vt 0.0 0.0
+vt 1.0 0.0
+vt 0.0 1.0
+f 1/1 2/2 3/3

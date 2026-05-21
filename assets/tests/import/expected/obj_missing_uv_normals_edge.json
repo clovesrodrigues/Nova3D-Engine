@@ -1,0 +1,13 @@
+{
+  "caseName":"obj_missing_uv_normals_edge",
+  "format":"OBJ",
+  "asset":"edgecases/triangle_no_uv_no_normals.obj",
+  "expectedSuccess":true,
+  "expectedNodeCountMin":1,
+  "expectedMeshCountMin":1,
+  "expectedMaterialCountMin":1,
+  "expectedAnimationCountExact":0,
+  "expectSkeleton":false,
+  "expectedWarningsContains":["no UV0","no normals"],
+  "expectedFallbackFlags":["missingUvFallback","missingNormalFallback","defaultMaterialInjected"]
+}

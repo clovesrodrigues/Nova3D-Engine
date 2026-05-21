@@ -1,0 +1,13 @@
+{
+  "caseName":"obj_missing_material_edge",
+  "format":"OBJ",
+  "asset":"edgecases/triangle_missing_material.obj",
+  "expectedSuccess":true,
+  "expectedNodeCountMin":1,
+  "expectedMeshCountMin":1,
+  "expectedMaterialCountMin":1,
+  "expectedAnimationCountExact":0,
+  "expectSkeleton":false,
+  "expectedWarningsContains":["missing diffuse texture"],
+  "expectedFallbackFlags":["missingDiffuseFallback"]
+}
